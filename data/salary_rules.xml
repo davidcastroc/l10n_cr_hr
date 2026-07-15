@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<odoo noupdate="1">
+<odoo>
   <record id="rule_basic" model="hr.salary.rule"><field name="name">CR - Salario base mensual</field><field name="code">BASIC</field><field name="sequence">10</field><field name="category_id" ref="hr_payroll.BASIC"/><field name="condition_select">none</field><field name="amount_select">code</field><field name="amount_python_compute">result = contract.wage</field><field name="struct_id" ref="structure_monthly"/></record>
   <record id="rule_basic_biweekly" model="hr.salary.rule"><field name="name">CR - Salario base quincenal</field><field name="code">BASIC</field><field name="sequence">10</field><field name="category_id" ref="hr_payroll.BASIC"/><field name="condition_select">none</field><field name="amount_select">code</field><field name="amount_python_compute">result = contract.wage / 2.0</field><field name="struct_id" ref="structure_biweekly"/></record>
   <record id="rule_basic_weekly" model="hr.salary.rule"><field name="name">CR - Salario base semanal</field><field name="code">BASIC</field><field name="sequence">10</field><field name="category_id" ref="hr_payroll.BASIC"/><field name="condition_select">none</field><field name="amount_select">code</field><field name="amount_python_compute">result = contract.wage * 12.0 / 52.0</field><field name="struct_id" ref="structure_weekly"/></record>

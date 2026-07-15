@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<odoo noupdate="1">
+<odoo>
   <record id="leave_type_cr_vacation" model="hr.leave.type"><field name="name">CR - Vacaciones</field><field name="requires_allocation">yes</field><field name="request_unit">day</field></record>
   <record id="leave_type_cr_unpaid" model="hr.leave.type"><field name="name">CR - Permiso sin goce</field><field name="requires_allocation">no</field><field name="request_unit">day</field><field name="work_entry_type_id" ref="work_entry_unpaid"/></record>
   <record id="leave_type_cr_paid" model="hr.leave.type"><field name="name">CR - Permiso con goce</field><field name="requires_allocation">no</field><field name="request_unit">day</field></record>

@@ -1,7 +1,6 @@
 from . import legal_parameter
 from . import social_contribution
 from . import tax_bracket
-from . import public_holiday
 from . import payroll_deduction
 from . import hr_employee
 from . import hr_contract

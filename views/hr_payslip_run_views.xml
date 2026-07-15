@@ -3,10 +3,10 @@
     <record id="view_hr_payslip_run_form_cr" model="ir.ui.view">
         <field name="name">hr.payslip.run.form.cr</field>
         <field name="model">hr.payslip.run</field>
-        <field name="inherit_id" ref="hr_payroll.hr_payslip_run_view_form"/>
+        <field name="inherit_id" ref="hr_payroll.hr_payslip_run_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//field[@name='date_end']" position="after">
-                <field name="cr_process_type"/>
+            <xpath expr="//field[@name='company_id']" position="after">
+                <field name="cr_process_type" string="Tipo de proceso" readonly="state != 'draft'"/>
                 <field name="cr_is_aguinaldo" invisible="1"/>
             </xpath>
         </field>

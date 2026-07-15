@@ -4,6 +4,7 @@ import logging
 from odoo import api, models
 
 _logger = logging.getLogger(__name__)
+MODULE = "l10n_cr_hr"
 
 
 class CrPayrollNativeSetup(models.AbstractModel):
@@ -12,92 +13,100 @@ class CrPayrollNativeSetup(models.AbstractModel):
 
     @api.model
     def setup_native_payroll(self):
-        """Integra la localización dentro de los menús y modelos nativos de Odoo.
-
-        Se ejecuta desde XML tanto en instalación como en actualización. No depende
-        de un XML ID específico del menú de Configuración de Enterprise, ya que ese
-        identificador ha cambiado entre revisiones de Odoo 18.
-        """
         self._setup_structure_type()
         self._setup_structure_rules()
         self._setup_input_availability()
-        self._setup_social_rules()
-        self._migrate_public_holidays_to_native()
+        self._remove_legacy_aggregate_rules()
         self._setup_native_menus()
         return True
 
-    def _ref(self, xmlid):
+    def _ref(self, name):
+        xmlid = name if "." in name else f"{MODULE}.{name}"
         return self.env.ref(xmlid, raise_if_not_found=False)
 
     def _setup_structure_type(self):
-        main_type = self._ref("l10n_cr_hr_payroll.structure_type_cr")
-        if not main_type:
+        structure_type = self._ref("structure_type_cr")
+        if not structure_type:
             return
 
         structures = self.env["hr.payroll.structure"].sudo().browse([
-            record.id
-            for record in (
-                self._ref("l10n_cr_hr_payroll.structure_monthly"),
-                self._ref("l10n_cr_hr_payroll.structure_biweekly"),
-                self._ref("l10n_cr_hr_payroll.structure_weekly"),
-                self._ref("l10n_cr_hr_payroll.structure_hourly"),
-                self._ref("l10n_cr_hr_payroll.structure_extraordinary"),
-                self._ref("l10n_cr_hr_payroll.structure_aguinaldo"),
-                self._ref("l10n_cr_hr_payroll.structure_settlement"),
-            )
-            if record
+            record.id for record in (
+                self._ref("structure_monthly"),
+                self._ref("structure_biweekly"),
+                self._ref("structure_weekly"),
+                self._ref("structure_hourly"),
+                self._ref("structure_extraordinary"),
+                self._ref("structure_aguinaldo"),
+                self._ref("structure_settlement"),
+            ) if record
         ])
         if structures:
-            structures.write({"type_id": main_type.id})
+            values = {"type_id": structure_type.id}
             if "use_worked_day_lines" in structures._fields:
-                structures.write({"use_worked_day_lines": True})
+                values["use_worked_day_lines"] = True
+            structures.write(values)
 
-        default_structure = self._ref("l10n_cr_hr_payroll.structure_biweekly")
-        if default_structure and "default_struct_id" in main_type._fields:
-            main_type.default_struct_id = default_structure
+        default_structure = self._ref("structure_biweekly")
+        if default_structure and "default_struct_id" in structure_type._fields:
+            structure_type.default_struct_id = default_structure
 
-        # Migra instalaciones 3.x que creaban cuatro tipos distintos.
-        legacy_xmlids = (
-            "structure_type_monthly",
-            "structure_type_biweekly",
-            "structure_type_weekly",
-            "structure_type_hourly",
+    @staticmethod
+    def _is_cr_rule(rule):
+        return (rule.name or "").startswith("CR -")
+
+    def _cleanup_structure(self, structure, allowed_codes, base_rule=None):
+        """Elimina de una estructura CR reglas estándar/legadas que duplican cálculos.
+
+        No toca reglas de otras estructuras ni reglas globales. Las reglas propias de
+        Costa Rica se reconocen por su nombre y por el registro base específico.
+        """
+        if not structure:
+            return
+        keep_ids = {base_rule.id} if base_rule else set()
+        for rule in structure.rule_ids:
+            keep = rule.id in keep_ids or (
+                self._is_cr_rule(rule) and rule.code in allowed_codes
+            )
+            if not keep:
+                rule.unlink()
+
+    def _copy_rule_to_structure(self, source_rule, structure):
+        matches = structure.rule_ids.filtered(
+            lambda rec: rec.code == source_rule.code and self._is_cr_rule(rec)
         )
-        imd_model = self.env["ir.model.data"].sudo()
-        contract_model = self.env["hr.contract"].sudo()
-        for legacy_name in legacy_xmlids:
-            imd = imd_model.search([
-                ("module", "=", "l10n_cr_hr_payroll"),
-                ("name", "=", legacy_name),
-                ("model", "=", "hr.payroll.structure.type"),
-            ], limit=1)
-            legacy = self.env["hr.payroll.structure.type"].sudo().browse(imd.res_id).exists() if imd else False
-            if not legacy or legacy == main_type:
-                continue
-            if "structure_type_id" in contract_model._fields:
-                contract_model.search([("structure_type_id", "=", legacy.id)]).write({"structure_type_id": main_type.id})
-            self.env["hr.payroll.structure"].sudo().search([("type_id", "=", legacy.id)]).write({"type_id": main_type.id})
-            try:
-                legacy.unlink()
-                imd.unlink()
-            except Exception:
-                _logger.warning("No fue posible eliminar el tipo de estructura legado %s", legacy.display_name, exc_info=True)
-                if "active" in legacy._fields:
-                    legacy.active = False
+        if len(matches) > 1:
+            matches[1:].unlink()
+            matches = matches[:1]
+        values = {
+            "name": source_rule.name,
+            "sequence": source_rule.sequence,
+            "category_id": source_rule.category_id.id,
+            "condition_select": source_rule.condition_select,
+            "amount_select": source_rule.amount_select,
+            "amount_python_compute": source_rule.amount_python_compute,
+            "appears_on_payslip": source_rule.appears_on_payslip,
+            "active": source_rule.active,
+        }
+        if matches:
+            matches.write(values)
+        else:
+            source_rule.copy({**values, "struct_id": structure.id})
 
     def _setup_structure_rules(self):
-        monthly = self._ref("l10n_cr_hr_payroll.structure_monthly")
+        monthly = self._ref("structure_monthly")
+        biweekly = self._ref("structure_biweekly")
+        weekly = self._ref("structure_weekly")
+        hourly = self._ref("structure_hourly")
         if not monthly:
             return
 
-        regular_targets = [
-            self._ref("l10n_cr_hr_payroll.structure_biweekly"),
-            self._ref("l10n_cr_hr_payroll.structure_weekly"),
-            self._ref("l10n_cr_hr_payroll.structure_hourly"),
-        ]
-        regular_targets = [record for record in regular_targets if record]
-
-        allowed_common_codes = {
+        bases = {
+            monthly: self._ref("rule_basic"),
+            biweekly: self._ref("rule_basic_biweekly"),
+            weekly: self._ref("rule_basic_weekly"),
+            hourly: self._ref("rule_basic_hourly"),
+        }
+        common_codes = {
             "CR_UNPAID_TIME", "CR_VACATION_PAY", "CR_DISABILITY_PAY",
             "CR_COMMISSION", "CR_BONUS", "CR_AVAILABILITY", "CR_RETROACTIVE",
             "CR_OTHER_INCOME", "CR_OT_15", "CR_OT_20", "CR_OT_30",
@@ -107,117 +116,85 @@ class CrPayrollNativeSetup(models.AbstractModel):
             "CR_FODESAF_PAT", "CR_IMAS_PAT", "CR_INA_PAT", "CR_FCL_PAT",
             "CR_ROP_PAT", "CR_PROV_AGUINALDO", "CR_PROV_VACATION",
         }
-        source_rules = monthly.rule_ids.filtered(lambda rule: rule.code in allowed_common_codes)
 
-        for target in regular_targets:
-            # Conserva únicamente su salario base específico y las reglas CR válidas.
-            obsolete = target.rule_ids.filtered(
-                lambda rule: rule.code != "BASIC" and rule.code not in allowed_common_codes
-            )
-            if obsolete:
-                obsolete.unlink()
+        # Primero limpia mensual y toma solo las reglas CR como plantilla.
+        self._cleanup_structure(monthly, common_codes | {"BASIC"}, bases[monthly])
+        source_rules = monthly.rule_ids.filtered(
+            lambda rule: self._is_cr_rule(rule) and rule.code in common_codes
+        ).sorted(key=lambda rule: rule.sequence)
 
-            existing = {rule.code: rule for rule in target.rule_ids}
-            for rule in source_rules:
-                if rule.code not in existing:
-                    rule.copy({"struct_id": target.id})
-                else:
-                    existing[rule.code].write({
-                        "name": rule.name,
-                        "sequence": rule.sequence,
-                        "category_id": rule.category_id.id,
-                        "condition_select": rule.condition_select,
-                        "amount_select": rule.amount_select,
-                        "amount_python_compute": rule.amount_python_compute,
-                        "appears_on_payslip": rule.appears_on_payslip,
-                        "active": rule.active,
-                    })
+        for target in (biweekly, weekly, hourly):
+            if not target:
+                continue
+            self._cleanup_structure(target, common_codes | {"BASIC"}, bases[target])
+            for source_rule in source_rules:
+                self._copy_rule_to_structure(source_rule, target)
 
-        # Estructuras especiales: se limpian para evitar reglas ordinarias improcedentes.
-        special_allowed = {
-            "l10n_cr_hr_payroll.structure_extraordinary": {"GROSS", "CR_SEM_EMP", "CR_IVM_EMP", "CR_BP_EMP", "CR_RENTA", "NET"},
-            "l10n_cr_hr_payroll.structure_aguinaldo": {"CR_AGUINALDO", "NET"},
-            "l10n_cr_hr_payroll.structure_settlement": {"GROSS", "CR_RECUR_DED", "NET"},
+        # Las estructuras especiales se mantienen deliberadamente pequeñas.
+        special_specs = {
+            self._ref("structure_extraordinary"): {
+                "GROSS", "CR_SEM_EMP", "CR_IVM_EMP", "CR_BP_EMP",
+                "CR_RENTA", "CR_RECUR_DED", "CR_OTHER_DED", "NET",
+            },
+            self._ref("structure_aguinaldo"): {"CR_AGUINALDO", "NET"},
+            self._ref("structure_settlement"): {"GROSS", "CR_RECUR_DED", "NET"},
         }
-        for xmlid, allowed in special_allowed.items():
-            structure = self._ref(xmlid)
-            if structure:
-                unwanted = structure.rule_ids.filtered(lambda rule: rule.code not in allowed)
-                if unwanted:
-                    unwanted.unlink()
+        for structure, allowed_codes in special_specs.items():
+            if not structure:
+                continue
+            unwanted = structure.rule_ids.filtered(
+                lambda rule: not (self._is_cr_rule(rule) and rule.code in allowed_codes)
+            )
+            if unwanted:
+                unwanted.unlink()
 
     def _setup_input_availability(self):
         input_model = self.env["hr.payslip.input.type"].sudo()
         if "struct_ids" not in input_model._fields:
             return
 
-        regular_structures = [
-            self._ref("l10n_cr_hr_payroll.structure_monthly"),
-            self._ref("l10n_cr_hr_payroll.structure_biweekly"),
-            self._ref("l10n_cr_hr_payroll.structure_weekly"),
-            self._ref("l10n_cr_hr_payroll.structure_hourly"),
-            self._ref("l10n_cr_hr_payroll.structure_extraordinary"),
+        regular = [
+            self._ref("structure_monthly"), self._ref("structure_biweekly"),
+            self._ref("structure_weekly"), self._ref("structure_hourly"),
         ]
-        regular_structures = [record.id for record in regular_structures if record]
-        aguinaldo = self._ref("l10n_cr_hr_payroll.structure_aguinaldo")
-        settlement = self._ref("l10n_cr_hr_payroll.structure_settlement")
+        extraordinary = self._ref("structure_extraordinary")
+        aguinaldo = self._ref("structure_aguinaldo")
+        settlement = self._ref("structure_settlement")
+        regular_ids = [record.id for record in regular if record]
 
-        settlement_codes = {"CR_SETTLEMENT_SALARY", "CR_SETTLEMENT_VACATION", "CR_NOTICE", "CR_SEVERANCE"}
-        aguinaldo_codes = {"CR_AGUINALDO_ADJ"}
-        inputs = input_model.search([("code", "like", "CR_%")])
-        for input_type in inputs:
+        settlement_codes = {
+            "CR_SETTLEMENT_SALARY", "CR_SETTLEMENT_VACATION",
+            "CR_NOTICE", "CR_SEVERANCE",
+        }
+        extraordinary_codes = {
+            "CR_COMMISSION", "CR_BONUS", "CR_INCENTIVE", "CR_PRODUCTIVITY",
+            "CR_AVAILABILITY", "CR_RETROACTIVE", "CR_SALARY_DIFF",
+            "CR_OTHER_INCOME", "CR_VIATIC_TAXABLE", "CR_REIMBURSEMENT",
+            "CR_OTHER_DED",
+        }
+        for input_type in input_model.search([("code", "like", "CR_%")]):
             if input_type.code in settlement_codes:
-                ids = [settlement.id] if settlement else []
-            elif input_type.code in aguinaldo_codes:
-                ids = [record.id for record in (aguinaldo, settlement) if record]
+                structure_ids = [settlement.id] if settlement else []
+            elif input_type.code == "CR_AGUINALDO_ADJ":
+                structure_ids = [record.id for record in (aguinaldo, settlement) if record]
+            elif input_type.code in extraordinary_codes:
+                structure_ids = regular_ids + ([extraordinary.id] if extraordinary else [])
             else:
-                ids = regular_structures
-            input_type.write({"struct_ids": [(6, 0, ids)]})
+                structure_ids = regular_ids
+            input_type.write({"struct_ids": [(6, 0, structure_ids)]})
 
-
-    def _setup_social_rules(self):
-        # Las reglas agregadas de versiones anteriores se desactivan para evitar
-        # duplicar rebajos/cargas. Las reglas individuales quedan visibles en la
-        # estructura salarial nativa.
-        for xmlid in (
-            "l10n_cr_hr_payroll.rule_social_employee",
-            "l10n_cr_hr_payroll.rule_employer_social",
-            "l10n_cr_hr_payroll.rule_extra_social",
-        ):
-            rule = self._ref(xmlid)
-            if rule and "active" in rule._fields:
-                rule.active = False
-
-    def _migrate_public_holidays_to_native(self):
-        if "cr.payroll.public.holiday" not in self.env:
-            return
-        Legacy = self.env["cr.payroll.public.holiday"].sudo()
-        Native = self.env["resource.calendar.leaves"].sudo()
-        from datetime import datetime, time, timedelta
-        from odoo import fields
-        for legacy in Legacy.search([]):
-            start = datetime.combine(legacy.date, time.min)
-            end = start + timedelta(days=1)
-            domain = [("cr_is_public_holiday", "=", True), ("date_from", "=", fields.Datetime.to_string(start))]
-            if not Native.search_count(domain):
-                Native.create({
-                    "name": "CR - %s" % legacy.name,
-                    "date_from": fields.Datetime.to_string(start),
-                    "date_to": fields.Datetime.to_string(end),
-                    "company_id": legacy.company_id.id or self.env.company.id,
-                    "cr_is_public_holiday": True,
-                    "cr_mandatory_pay": legacy.mandatory_pay,
-                    "cr_holiday_type": legacy.holiday_type,
-                    "cr_legal_source": legacy.source,
-                })
+    def _remove_legacy_aggregate_rules(self):
+        for name in ("rule_social_employee", "rule_employer_social", "rule_extra_social"):
+            rule = self._ref(name)
+            if rule:
+                rule.unlink()
 
     def _payroll_menus(self):
-        imd_records = self.env["ir.model.data"].sudo().search([
-            ("module", "=", "hr_payroll"),
-            ("model", "=", "ir.ui.menu"),
+        records = self.env["ir.model.data"].sudo().search([
+            ("module", "=", "hr_payroll"), ("model", "=", "ir.ui.menu"),
         ])
         result = []
-        for imd in imd_records:
+        for imd in records:
             menu = self.env["ir.ui.menu"].sudo().browse(imd.res_id).exists()
             if menu:
                 result.append((imd.name.lower(), menu))
@@ -230,7 +207,8 @@ class CrPayrollNativeSetup(models.AbstractModel):
             if require_parent and not menu.parent_id:
                 continue
             source_name = (menu.name or "").lower()
-            score = sum(10 for token in tokens if token in xml_name) + sum(3 for token in tokens if token in source_name)
+            score = sum(10 for token in tokens if token in xml_name)
+            score += sum(3 for token in tokens if token in source_name)
             if score:
                 scored.append((score, -menu.sequence, menu))
         return max(scored, default=(0, 0, False))[2]
@@ -238,24 +216,20 @@ class CrPayrollNativeSetup(models.AbstractModel):
     def _setup_native_menus(self):
         candidates = self._payroll_menus()
         if not candidates:
-            _logger.warning("No se encontraron menús nativos de hr_payroll para integrar Nómina Costa Rica")
             return
-
         payroll_root = self._pick_menu(candidates, ("root", "payroll"))
-        config_menu = self._pick_menu(candidates, ("configuration", "config", "settings"), require_parent=True)
+        config_menu = self._pick_menu(
+            candidates, ("configuration", "config", "settings"), require_parent=True
+        )
         payslip_menu = self._pick_menu(candidates, ("payslip", "slip"), require_parent=True)
 
-        config_root = self._ref("l10n_cr_hr_payroll.menu_cr_configuration_root")
-        incident_menu = self._ref("l10n_cr_hr_payroll.menu_cr_incidents")
-        termination_menu = self._ref("l10n_cr_hr_payroll.menu_cr_terminations")
-
+        config_root = self._ref("menu_cr_configuration_root")
+        incidents = self._ref("menu_cr_incidents")
+        terminations = self._ref("menu_cr_terminations")
         if config_root:
             config_root.parent_id = config_menu or payroll_root
-            config_root.sequence = 95
         operations_parent = payslip_menu or payroll_root or config_root
-        if incident_menu and operations_parent:
-            incident_menu.parent_id = operations_parent
-            incident_menu.sequence = 85
-        if termination_menu and operations_parent:
-            termination_menu.parent_id = operations_parent
-            termination_menu.sequence = 90
+        if incidents and operations_parent:
+            incidents.parent_id = operations_parent
+        if terminations and operations_parent:
+            terminations.parent_id = operations_parent
