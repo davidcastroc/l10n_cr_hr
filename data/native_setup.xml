@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <function model="cr.payroll.native.setup" name="setup_native_payroll"/>
+</odoo>

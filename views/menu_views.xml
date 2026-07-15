@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Estos menús se crean sin depender de XML IDs internos que varían entre
+         revisiones Enterprise. data/native_setup.xml los reubica dentro de los
+         menús nativos de Nómina durante instalación y cada actualización. -->
+    <menuitem id="menu_cr_configuration_root"
+              name="Costa Rica"
+              sequence="95"
+              groups="hr_payroll.group_hr_payroll_manager"/>
+
+    <menuitem id="menu_cr_incidents"
+              name="Incidencias de nómina"
+              parent="menu_cr_configuration_root"
+              action="action_cr_payroll_incident"
+              sequence="5"/>
+    <menuitem id="menu_cr_terminations"
+              name="Liquidaciones"
+              parent="menu_cr_configuration_root"
+              action="action_cr_termination"
+              sequence="10"/>
+
+    <menuitem id="menu_cr_legal_parameters"
+              name="Parámetros legales"
+              parent="menu_cr_configuration_root"
+              action="action_cr_legal_parameter"
+              sequence="20"/>
+    <menuitem id="menu_cr_social_contributions"
+              name="Cargas sociales"
+              parent="menu_cr_configuration_root"
+              action="action_cr_social_contribution"
+              sequence="30"/>
+    <menuitem id="menu_cr_tax_brackets"
+              name="Tramos de renta"
+              parent="menu_cr_configuration_root"
+              action="action_cr_tax_bracket"
+              sequence="40"/>
+
+    <menuitem id="menu_cr_disability_rules"
+              name="Reglas de incapacidad"
+              parent="menu_cr_configuration_root"
+              action="action_cr_disability_rule"
+              sequence="60"/>
+    <menuitem id="menu_cr_deductions"
+              name="Deducciones recurrentes"
+              parent="menu_cr_configuration_root"
+              action="action_cr_deduction"
+              sequence="70"/>
+    <menuitem id="menu_cr_generate_holidays"
+              name="Generar feriados"
+              parent="menu_cr_configuration_root"
+              action="action_cr_generate_holidays"
+              sequence="80"/>
+</odoo>

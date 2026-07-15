@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <record id="view_cr_payroll_incident_list" model="ir.ui.view">
+    <field name="name">cr.payroll.incident.list</field><field name="model">cr.payroll.incident</field>
+    <field name="arch" type="xml"><list decoration-success="state == 'approved'" decoration-muted="state in ('applied','cancel')"><field name="date"/><field name="employee_id"/><field name="incident_type"/><field name="quantity"/><field name="rate"/><field name="amount"/><field name="state"/></list></field>
+  </record>
+  <record id="view_cr_payroll_incident_form" model="ir.ui.view">
+    <field name="name">cr.payroll.incident.form</field><field name="model">cr.payroll.incident</field>
+    <field name="arch" type="xml"><form><header><button name="action_submit" type="object" string="Enviar" class="btn-primary" invisible="state != 'draft'"/><button name="action_approve" type="object" string="Aprobar" class="btn-primary" invisible="state != 'submitted'"/><button name="action_reject" type="object" string="Rechazar" invisible="state != 'submitted'"/><button name="action_cancel" type="object" string="Cancelar" invisible="state in ('applied','cancel')"/><field name="state" widget="statusbar"/></header><sheet><group><group><field name="name"/><field name="employee_id"/><field name="contract_id"/><field name="date"/></group><group><field name="incident_type"/><field name="quantity"/><field name="rate"/><field name="amount"/><field name="payslip_id" readonly="1"/></group></group><field name="description"/><field name="attachment_ids" widget="many2many_binary"/></sheet></form></field>
+  </record>
+  <record id="action_cr_payroll_incident" model="ir.actions.act_window"><field name="name">Incidencias de nómina</field><field name="res_model">cr.payroll.incident</field><field name="view_mode">list,form</field></record>
+</odoo>

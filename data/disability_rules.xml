@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+  <!-- Las tasas se entregan desactivadas hasta validación formal con el cliente/asesoría laboral. -->
+  <record id="disability_ccss_initial" model="cr.payroll.disability.rule"><field name="name">CCSS - tramo inicial configurable</field><field name="code">CCSS</field><field name="day_from">1</field><field name="day_to">3</field><field name="employer_rate">0</field><field name="subsidy_rate">0</field><field name="date_from">2026-01-01</field><field name="active">False</field><field name="notes">Definir porcentajes y tratamiento exacto antes del go-live.</field></record>
+  <record id="disability_ccss_later" model="cr.payroll.disability.rule"><field name="name">CCSS - tramo posterior configurable</field><field name="code">CCSS</field><field name="day_from">4</field><field name="employer_rate">0</field><field name="subsidy_rate">0</field><field name="date_from">2026-01-01</field><field name="active">False</field><field name="notes">Definir porcentajes y tratamiento exacto antes del go-live.</field></record>
+  <record id="disability_ins" model="cr.payroll.disability.rule"><field name="name">INS - riesgo laboral configurable</field><field name="code">INS</field><field name="day_from">1</field><field name="employer_rate">0</field><field name="subsidy_rate">0</field><field name="date_from">2026-01-01</field><field name="active">False</field><field name="notes">Depende de póliza, tipo de riesgo y resolución.</field></record>
+</odoo>

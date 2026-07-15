@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+  <record id="input_commission" model="hr.payslip.input.type"><field name="name">CR - Comisión</field><field name="code">CR_COMMISSION</field></record>
+  <record id="input_bonus" model="hr.payslip.input.type"><field name="name">CR - Bono</field><field name="code">CR_BONUS</field></record>
+  <record id="input_incentive" model="hr.payslip.input.type"><field name="name">CR - Incentivo</field><field name="code">CR_INCENTIVE</field></record>
+  <record id="input_productivity" model="hr.payslip.input.type"><field name="name">CR - Productividad</field><field name="code">CR_PRODUCTIVITY</field></record>
+  <record id="input_availability" model="hr.payslip.input.type"><field name="name">CR - Disponibilidad / guardia</field><field name="code">CR_AVAILABILITY</field></record>
+  <record id="input_retroactive" model="hr.payslip.input.type"><field name="name">CR - Retroactivo</field><field name="code">CR_RETROACTIVE</field></record>
+  <record id="input_salary_difference" model="hr.payslip.input.type"><field name="name">CR - Diferencia salarial</field><field name="code">CR_SALARY_DIFF</field></record>
+  <record id="input_other_income" model="hr.payslip.input.type"><field name="name">CR - Otro ingreso salarial</field><field name="code">CR_OTHER_INCOME</field></record>
+  <record id="input_reimbursement" model="hr.payslip.input.type"><field name="name">CR - Reembolso no salarial</field><field name="code">CR_REIMBURSEMENT</field></record>
+  <record id="input_viatic_taxable" model="hr.payslip.input.type"><field name="name">CR - Viático salarial</field><field name="code">CR_VIATIC_TAXABLE</field></record>
+  <record id="input_ot_15" model="hr.payslip.input.type"><field name="name">CR - Horas extra 1.5</field><field name="code">CR_OT_15</field></record>
+  <record id="input_ot_20" model="hr.payslip.input.type"><field name="name">CR - Horas / pago doble</field><field name="code">CR_OT_20</field></record>
+  <record id="input_ot_30" model="hr.payslip.input.type"><field name="name">CR - Horas extra en feriado 3.0</field><field name="code">CR_OT_30</field></record>
+  <record id="input_unpaid_hours" model="hr.payslip.input.type"><field name="name">CR - Horas no laboradas</field><field name="code">CR_UNPAID_HOURS</field></record>
+  <record id="input_unpaid_days" model="hr.payslip.input.type"><field name="name">CR - Días no laborados</field><field name="code">CR_UNPAID_DAYS</field></record>
+  <record id="input_tardiness" model="hr.payslip.input.type"><field name="name">CR - Tardías</field><field name="code">CR_TARDINESS</field></record>
+  <record id="input_vacation_pay" model="hr.payslip.input.type"><field name="name">CR - Vacaciones pagadas</field><field name="code">CR_VACATION_PAY</field></record>
+  <record id="input_ccss_employer_disability" model="hr.payslip.input.type"><field name="name">CR - Pago patronal incapacidad CCSS</field><field name="code">CR_CCSS_DISABILITY_PAY</field></record>
+  <record id="input_ins_employer_disability" model="hr.payslip.input.type"><field name="name">CR - Pago patronal incapacidad INS</field><field name="code">CR_INS_DISABILITY_PAY</field></record>
+  <record id="input_maternity_pay" model="hr.payslip.input.type"><field name="name">CR - Licencia maternidad</field><field name="code">CR_MATERNITY_PAY</field></record>
+  <record id="input_paternity_pay" model="hr.payslip.input.type"><field name="name">CR - Licencia paternidad</field><field name="code">CR_PATERNITY_PAY</field></record>
+  <record id="input_other_ded" model="hr.payslip.input.type"><field name="name">CR - Otra deducción</field><field name="code">CR_OTHER_DED</field></record>
+  <record id="input_aguinaldo_adj" model="hr.payslip.input.type"><field name="name">CR - Ajuste de aguinaldo</field><field name="code">CR_AGUINALDO_ADJ</field></record>
+  <record id="input_severance_salary" model="hr.payslip.input.type"><field name="name">CR - Salario pendiente liquidación</field><field name="code">CR_SETTLEMENT_SALARY</field></record>
+  <record id="input_severance_vacation" model="hr.payslip.input.type"><field name="name">CR - Vacaciones pendientes liquidación</field><field name="code">CR_SETTLEMENT_VACATION</field></record>
+  <record id="input_severance_notice" model="hr.payslip.input.type"><field name="name">CR - Preaviso</field><field name="code">CR_NOTICE</field></record>
+  <record id="input_severance_pay" model="hr.payslip.input.type"><field name="name">CR - Cesantía</field><field name="code">CR_SEVERANCE</field></record>
+</odoo>
