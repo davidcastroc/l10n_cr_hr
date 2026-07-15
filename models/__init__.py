@@ -7,6 +7,7 @@ from . import hr_employee
 from . import hr_contract
 from . import res_company
 from . import hr_payslip
+from . import hr_payslip_run
 from . import payroll_incident
 from . import disability_rule
 from . import severance

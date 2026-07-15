@@ -16,3 +16,5 @@ access_cr_disability_rule_user,cr.payroll.disability.rule user,model_cr_payroll_
 access_cr_disability_rule_manager,cr.payroll.disability.rule manager,model_cr_payroll_disability_rule,hr_payroll.group_hr_payroll_manager,1,1,1,1
 access_cr_termination_user,cr.payroll.termination user,model_cr_payroll_termination,hr_payroll.group_hr_payroll_user,1,1,1,0
 access_cr_termination_manager,cr.payroll.termination manager,model_cr_payroll_termination,hr_payroll.group_hr_payroll_manager,1,1,1,1
+access_cr_tax_dependent_user,cr.tax.dependent.user,model_cr_payroll_tax_dependent,hr_payroll.group_hr_payroll_user,1,1,1,0
+access_cr_tax_dependent_manager,cr.tax.dependent.manager,model_cr_payroll_tax_dependent,hr_payroll.group_hr_payroll_manager,1,1,1,1

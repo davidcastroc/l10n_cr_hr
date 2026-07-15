@@ -89,23 +89,62 @@ class CrPayrollNativeSetup(models.AbstractModel):
         monthly = self._ref("l10n_cr_hr_payroll.structure_monthly")
         if not monthly:
             return
-        target_xmlids = (
-            "l10n_cr_hr_payroll.structure_biweekly",
-            "l10n_cr_hr_payroll.structure_weekly",
-            "l10n_cr_hr_payroll.structure_hourly",
-        )
-        # Cada estructura conserva su regla BASIC específica; el resto se replica
-        # de forma controlada y sin duplicar códigos.
-        common_rules = monthly.rule_ids.filtered(lambda rule: rule.code != "BASIC")
-        for xmlid in target_xmlids:
-            target = self._ref(xmlid)
-            if not target:
-                continue
-            existing_codes = set(target.rule_ids.mapped("code"))
-            for rule in common_rules:
-                if rule.code not in existing_codes:
+
+        regular_targets = [
+            self._ref("l10n_cr_hr_payroll.structure_biweekly"),
+            self._ref("l10n_cr_hr_payroll.structure_weekly"),
+            self._ref("l10n_cr_hr_payroll.structure_hourly"),
+        ]
+        regular_targets = [record for record in regular_targets if record]
+
+        allowed_common_codes = {
+            "CR_UNPAID_TIME", "CR_VACATION_PAY", "CR_DISABILITY_PAY",
+            "CR_COMMISSION", "CR_BONUS", "CR_AVAILABILITY", "CR_RETROACTIVE",
+            "CR_OTHER_INCOME", "CR_OT_15", "CR_OT_20", "CR_OT_30",
+            "CR_REIMBURSEMENT", "GROSS", "CR_SEM_EMP", "CR_IVM_EMP",
+            "CR_BP_EMP", "CR_RENTA", "CR_RECUR_DED", "CR_OTHER_DED",
+            "NET", "CR_SEM_PAT", "CR_IVM_PAT", "CR_BP_PAT",
+            "CR_FODESAF_PAT", "CR_IMAS_PAT", "CR_INA_PAT", "CR_FCL_PAT",
+            "CR_ROP_PAT", "CR_PROV_AGUINALDO", "CR_PROV_VACATION",
+        }
+        source_rules = monthly.rule_ids.filtered(lambda rule: rule.code in allowed_common_codes)
+
+        for target in regular_targets:
+            # Conserva únicamente su salario base específico y las reglas CR válidas.
+            obsolete = target.rule_ids.filtered(
+                lambda rule: rule.code != "BASIC" and rule.code not in allowed_common_codes
+            )
+            if obsolete:
+                obsolete.unlink()
+
+            existing = {rule.code: rule for rule in target.rule_ids}
+            for rule in source_rules:
+                if rule.code not in existing:
                     rule.copy({"struct_id": target.id})
-                    existing_codes.add(rule.code)
+                else:
+                    existing[rule.code].write({
+                        "name": rule.name,
+                        "sequence": rule.sequence,
+                        "category_id": rule.category_id.id,
+                        "condition_select": rule.condition_select,
+                        "amount_select": rule.amount_select,
+                        "amount_python_compute": rule.amount_python_compute,
+                        "appears_on_payslip": rule.appears_on_payslip,
+                        "active": rule.active,
+                    })
+
+        # Estructuras especiales: se limpian para evitar reglas ordinarias improcedentes.
+        special_allowed = {
+            "l10n_cr_hr_payroll.structure_extraordinary": {"GROSS", "CR_SEM_EMP", "CR_IVM_EMP", "CR_BP_EMP", "CR_RENTA", "NET"},
+            "l10n_cr_hr_payroll.structure_aguinaldo": {"CR_AGUINALDO", "NET"},
+            "l10n_cr_hr_payroll.structure_settlement": {"GROSS", "CR_RECUR_DED", "NET"},
+        }
+        for xmlid, allowed in special_allowed.items():
+            structure = self._ref(xmlid)
+            if structure:
+                unwanted = structure.rule_ids.filtered(lambda rule: rule.code not in allowed)
+                if unwanted:
+                    unwanted.unlink()
 
     def _setup_input_availability(self):
         input_model = self.env["hr.payslip.input.type"].sudo()

@@ -234,5 +234,10 @@ class HrPayslip(models.Model):
         # Todo ingreso marcado en categorías ordinarias/variables; excluye reembolsos y el propio aguinaldo.
         eligible_codes = {"BASIC", "REGULAR", "VARIABLE", "OVERTIME", "ALLOWANCE"}
         total = sum(line.total for slip in slips for line in slip.line_ids if line.category_id.code in eligible_codes and line.code != "CR_AGUINALDO")
+        opening = self.employee_id.cr_aguinaldo_opening_earnings or 0.0
+        opening_date = self.employee_id.cr_aguinaldo_opening_date
+        if opening_date and not (start <= opening_date <= end):
+            opening = 0.0
+        total += opening
         total += self._cr_input_amount("CR_AGUINALDO_ADJ")
         return self._cr_round(max(total / 12.0, 0.0))
