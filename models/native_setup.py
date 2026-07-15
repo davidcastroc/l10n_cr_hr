@@ -55,30 +55,36 @@ class CrPayrollNativeSetup(models.AbstractModel):
         return (rule.name or "").startswith("CR -")
 
     def _cleanup_structure(self, structure, allowed_codes, base_rule=None):
-        """Elimina de una estructura CR reglas estándar/legadas que duplican cálculos.
-
-        No toca reglas de otras estructuras ni reglas globales. Las reglas propias de
-        Costa Rica se reconocen por su nombre y por el registro base específico.
-        """
         if not structure:
             return
+
         keep_ids = {base_rule.id} if base_rule else set()
-        for rule in structure.rule_ids:
+        seen_codes = set()
+
+        for rule in structure.rule_ids.sorted(key=lambda record: (record.sequence, record.id)):
             keep = rule.id in keep_ids or (
                 self._is_cr_rule(rule) and rule.code in allowed_codes
             )
+
             if not keep:
                 rule.unlink()
+                continue
+
+            if rule.code in seen_codes:
+                rule.unlink()
+                continue
+
+            seen_codes.add(rule.code)
 
     def _copy_rule_to_structure(self, source_rule, structure):
+        Rule = self.env["hr.salary.rule"].sudo()
         matches = structure.rule_ids.filtered(
-            lambda rec: rec.code == source_rule.code and self._is_cr_rule(rec)
-        )
-        if len(matches) > 1:
-            matches[1:].unlink()
-            matches = matches[:1]
+            lambda record: record.code == source_rule.code
+        ).sorted(key=lambda record: record.id)
+
         values = {
             "name": source_rule.name,
+            "code": source_rule.code,
             "sequence": source_rule.sequence,
             "category_id": source_rule.category_id.id,
             "condition_select": source_rule.condition_select,
@@ -86,11 +92,16 @@ class CrPayrollNativeSetup(models.AbstractModel):
             "amount_python_compute": source_rule.amount_python_compute,
             "appears_on_payslip": source_rule.appears_on_payslip,
             "active": source_rule.active,
+            "struct_id": structure.id,
         }
+
         if matches:
-            matches.write(values)
+            target = matches[0]
+            target.write(values)
+            if len(matches) > 1:
+                matches[1:].unlink()
         else:
-            source_rule.copy({**values, "struct_id": structure.id})
+            Rule.create(values)
 
     def _setup_structure_rules(self):
         monthly = self._ref("structure_monthly")
@@ -106,6 +117,7 @@ class CrPayrollNativeSetup(models.AbstractModel):
             weekly: self._ref("rule_basic_weekly"),
             hourly: self._ref("rule_basic_hourly"),
         }
+
         common_codes = {
             "CR_UNPAID_TIME", "CR_VACATION_PAY", "CR_DISABILITY_PAY",
             "CR_COMMISSION", "CR_BONUS", "CR_AVAILABILITY", "CR_RETROACTIVE",
@@ -114,11 +126,11 @@ class CrPayrollNativeSetup(models.AbstractModel):
             "CR_BP_EMP", "CR_RENTA", "CR_RECUR_DED", "CR_OTHER_DED",
             "NET", "CR_SEM_PAT", "CR_IVM_PAT", "CR_BP_PAT",
             "CR_FODESAF_PAT", "CR_IMAS_PAT", "CR_INA_PAT", "CR_FCL_PAT",
-            "CR_ROP_PAT", "CR_PROV_AGUINALDO", "CR_PROV_VACATION",
+            "CR_ROP_PAT", "CR_AGUINALDO_PROV", "CR_VACATION_PROV",
         }
 
-        # Primero limpia mensual y toma solo las reglas CR como plantilla.
         self._cleanup_structure(monthly, common_codes | {"BASIC"}, bases[monthly])
+
         source_rules = monthly.rule_ids.filtered(
             lambda rule: self._is_cr_rule(rule) and rule.code in common_codes
         ).sorted(key=lambda rule: rule.sequence)
@@ -126,11 +138,17 @@ class CrPayrollNativeSetup(models.AbstractModel):
         for target in (biweekly, weekly, hourly):
             if not target:
                 continue
+
             self._cleanup_structure(target, common_codes | {"BASIC"}, bases[target])
+
             for source_rule in source_rules:
                 self._copy_rule_to_structure(source_rule, target)
 
-        # Las estructuras especiales se mantienen deliberadamente pequeñas.
+            # El nombre final nunca debe mostrar "(copy)".
+            for rule in target.rule_ids:
+                if rule.name and rule.name.endswith(" (copy)"):
+                    rule.name = rule.name[:-7]
+
         special_specs = {
             self._ref("structure_extraordinary"): {
                 "GROSS", "CR_SEM_EMP", "CR_IVM_EMP", "CR_BP_EMP",
@@ -139,11 +157,14 @@ class CrPayrollNativeSetup(models.AbstractModel):
             self._ref("structure_aguinaldo"): {"CR_AGUINALDO", "NET"},
             self._ref("structure_settlement"): {"GROSS", "CR_RECUR_DED", "NET"},
         }
+
         for structure, allowed_codes in special_specs.items():
             if not structure:
                 continue
             unwanted = structure.rule_ids.filtered(
-                lambda rule: not (self._is_cr_rule(rule) and rule.code in allowed_codes)
+                lambda rule: not (
+                    self._is_cr_rule(rule) and rule.code in allowed_codes
+                )
             )
             if unwanted:
                 unwanted.unlink()
@@ -154,8 +175,10 @@ class CrPayrollNativeSetup(models.AbstractModel):
             return
 
         regular = [
-            self._ref("structure_monthly"), self._ref("structure_biweekly"),
-            self._ref("structure_weekly"), self._ref("structure_hourly"),
+            self._ref("structure_monthly"),
+            self._ref("structure_biweekly"),
+            self._ref("structure_weekly"),
+            self._ref("structure_hourly"),
         ]
         extraordinary = self._ref("structure_extraordinary")
         aguinaldo = self._ref("structure_aguinaldo")
@@ -172,26 +195,37 @@ class CrPayrollNativeSetup(models.AbstractModel):
             "CR_OTHER_INCOME", "CR_VIATIC_TAXABLE", "CR_REIMBURSEMENT",
             "CR_OTHER_DED",
         }
+
         for input_type in input_model.search([("code", "like", "CR_%")]):
             if input_type.code in settlement_codes:
                 structure_ids = [settlement.id] if settlement else []
             elif input_type.code == "CR_AGUINALDO_ADJ":
-                structure_ids = [record.id for record in (aguinaldo, settlement) if record]
+                structure_ids = [
+                    record.id for record in (aguinaldo, settlement) if record
+                ]
             elif input_type.code in extraordinary_codes:
-                structure_ids = regular_ids + ([extraordinary.id] if extraordinary else [])
+                structure_ids = regular_ids + (
+                    [extraordinary.id] if extraordinary else []
+                )
             else:
                 structure_ids = regular_ids
+
             input_type.write({"struct_ids": [(6, 0, structure_ids)]})
 
     def _remove_legacy_aggregate_rules(self):
-        for name in ("rule_social_employee", "rule_employer_social", "rule_extra_social"):
-            rule = self._ref(name)
-            if rule:
-                rule.unlink()
+        Rule = self.env["hr.salary.rule"].sudo()
+        legacy_codes = {"CR_SOC_EMP", "CR_SOC_PAT"}
+        legacy_rules = Rule.search([
+            ("code", "in", list(legacy_codes)),
+            ("name", "ilike", "CR -"),
+        ])
+        if legacy_rules:
+            legacy_rules.unlink()
 
     def _payroll_menus(self):
         records = self.env["ir.model.data"].sudo().search([
-            ("module", "=", "hr_payroll"), ("model", "=", "ir.ui.menu"),
+            ("module", "=", "hr_payroll"),
+            ("model", "=", "ir.ui.menu"),
         ])
         result = []
         for imd in records:
@@ -217,18 +251,28 @@ class CrPayrollNativeSetup(models.AbstractModel):
         candidates = self._payroll_menus()
         if not candidates:
             return
+
         payroll_root = self._pick_menu(candidates, ("root", "payroll"))
         config_menu = self._pick_menu(
-            candidates, ("configuration", "config", "settings"), require_parent=True
+            candidates,
+            ("configuration", "config", "settings"),
+            require_parent=True,
         )
-        payslip_menu = self._pick_menu(candidates, ("payslip", "slip"), require_parent=True)
+        payslip_menu = self._pick_menu(
+            candidates,
+            ("payslip", "slip"),
+            require_parent=True,
+        )
 
         config_root = self._ref("menu_cr_configuration_root")
         incidents = self._ref("menu_cr_incidents")
         terminations = self._ref("menu_cr_terminations")
+
         if config_root:
             config_root.parent_id = config_menu or payroll_root
+
         operations_parent = payslip_menu or payroll_root or config_root
+
         if incidents and operations_parent:
             incidents.parent_id = operations_parent
         if terminations and operations_parent:

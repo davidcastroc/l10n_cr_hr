@@ -1,41 +1,327 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" ?>
 <odoo>
-  <record id="rule_basic" model="hr.salary.rule"><field name="name">CR - Salario base mensual</field><field name="code">BASIC</field><field name="sequence">10</field><field name="category_id" ref="hr_payroll.BASIC"/><field name="condition_select">none</field><field name="amount_select">code</field><field name="amount_python_compute">result = contract.wage</field><field name="struct_id" ref="structure_monthly"/></record>
-  <record id="rule_basic_biweekly" model="hr.salary.rule"><field name="name">CR - Salario base quincenal</field><field name="code">BASIC</field><field name="sequence">10</field><field name="category_id" ref="hr_payroll.BASIC"/><field name="condition_select">none</field><field name="amount_select">code</field><field name="amount_python_compute">result = contract.wage / 2.0</field><field name="struct_id" ref="structure_biweekly"/></record>
-  <record id="rule_basic_weekly" model="hr.salary.rule"><field name="name">CR - Salario base semanal</field><field name="code">BASIC</field><field name="sequence">10</field><field name="category_id" ref="hr_payroll.BASIC"/><field name="condition_select">none</field><field name="amount_select">code</field><field name="amount_python_compute">result = contract.wage * 12.0 / 52.0</field><field name="struct_id" ref="structure_weekly"/></record>
-  <record id="rule_basic_hourly" model="hr.salary.rule"><field name="name">CR - Salario ordinario por horas</field><field name="code">BASIC</field><field name="sequence">10</field><field name="category_id" ref="hr_payroll.BASIC"/><field name="condition_select">none</field><field name="amount_select">code</field><field name="amount_python_compute">result = worked_days.WORK100.number_of_hours * contract.wage if worked_days.WORK100 else 0.0</field><field name="struct_id" ref="structure_hourly"/></record>
-
-  <record id="rule_unpaid_time" model="hr.salary.rule"><field name="name">CR - Rebajo por tiempo no laborado</field><field name="code">CR_UNPAID_TIME</field><field name="sequence">20</field><field name="category_id" ref="cat_legal_ded"/><field name="condition_select">none</field><field name="amount_select">code</field><field name="amount_python_compute">result = -payslip._cr_unpaid_time_amount()</field><field name="struct_id" ref="structure_monthly"/></record>
-  <record id="rule_vacation_pay" model="hr.salary.rule"><field name="name">CR - Vacaciones pagadas</field><field name="code">CR_VACATION_PAY</field><field name="sequence">30</field><field name="category_id" ref="cat_allowance"/><field name="condition_select">none</field><field name="amount_select">code</field><field name="amount_python_compute">result = payslip._cr_input_amount('CR_VACATION_PAY')</field><field name="struct_id" ref="structure_monthly"/></record>
-  <record id="rule_disability_pay" model="hr.salary.rule"><field name="name">CR - Pagos patronales por incapacidad/licencias</field><field name="code">CR_DISABILITY_PAY</field><field name="sequence">31</field><field name="category_id" ref="cat_allowance"/><field name="condition_select">none</field><field name="amount_select">code</field><field name="amount_python_compute">result = payslip._cr_input_amount('CR_CCSS_DISABILITY_PAY') + payslip._cr_input_amount('CR_INS_DISABILITY_PAY') + payslip._cr_input_amount('CR_MATERNITY_PAY') + payslip._cr_input_amount('CR_PATERNITY_PAY')</field><field name="struct_id" ref="structure_monthly"/></record>
-  <record id="rule_commission" model="hr.salary.rule"><field name="name">CR - Comisiones</field><field name="code">CR_COMMISSION</field><field name="sequence">50</field><field name="category_id" ref="cat_variable"/><field name="condition_select">none</field><field name="amount_select">code</field><field name="amount_python_compute">result = payslip._cr_input_amount('CR_COMMISSION')</field><field name="struct_id" ref="structure_monthly"/></record>
-  <record id="rule_bonus" model="hr.salary.rule"><field name="name">CR - Bonos, incentivos y productividad</field><field name="code">CR_BONUS</field><field name="sequence">51</field><field name="category_id" ref="cat_variable"/><field name="condition_select">none</field><field name="amount_select">code</field><field name="amount_python_compute">result = payslip._cr_input_amount('CR_BONUS') + payslip._cr_input_amount('CR_INCENTIVE') + payslip._cr_input_amount('CR_PRODUCTIVITY')</field><field name="struct_id" ref="structure_monthly"/></record>
-  <record id="rule_availability" model="hr.salary.rule"><field name="name">CR - Disponibilidad y guardias</field><field name="code">CR_AVAILABILITY</field><field name="sequence">52</field><field name="category_id" ref="cat_variable"/><field name="condition_select">none</field><field name="amount_select">code</field><field name="amount_python_compute">result = payslip._cr_input_amount('CR_AVAILABILITY')</field><field name="struct_id" ref="structure_monthly"/></record>
-  <record id="rule_retroactive" model="hr.salary.rule"><field name="name">CR - Retroactivos y diferencias salariales</field><field name="code">CR_RETROACTIVE</field><field name="sequence">53</field><field name="category_id" ref="cat_variable"/><field name="condition_select">none</field><field name="amount_select">code</field><field name="amount_python_compute">result = payslip._cr_input_amount('CR_RETROACTIVE') + payslip._cr_input_amount('CR_SALARY_DIFF')</field><field name="struct_id" ref="structure_monthly"/></record>
-  <record id="rule_other_income" model="hr.salary.rule"><field name="name">CR - Otros ingresos y viáticos salariales</field><field name="code">CR_OTHER_INCOME</field><field name="sequence">54</field><field name="category_id" ref="cat_variable"/><field name="condition_select">none</field><field name="amount_select">code</field><field name="amount_python_compute">result = payslip._cr_input_amount('CR_OTHER_INCOME') + payslip._cr_input_amount('CR_VIATIC_TAXABLE')</field><field name="struct_id" ref="structure_monthly"/></record>
-  <record id="rule_ot_15" model="hr.salary.rule"><field name="name">CR - Horas extra 1.5</field><field name="code">CR_OT_15</field><field name="sequence">60</field><field name="category_id" ref="cat_overtime"/><field name="condition_select">none</field><field name="amount_select">code</field><field name="amount_python_compute">result = payslip._cr_input_hours_amount('CR_OT_15', 1.5)</field><field name="struct_id" ref="structure_monthly"/></record>
-  <record id="rule_ot_20" model="hr.salary.rule"><field name="name">CR - Pago doble / feriado trabajado</field><field name="code">CR_OT_20</field><field name="sequence">61</field><field name="category_id" ref="cat_overtime"/><field name="condition_select">none</field><field name="amount_select">code</field><field name="amount_python_compute">result = payslip._cr_input_hours_amount('CR_OT_20', 2.0)</field><field name="struct_id" ref="structure_monthly"/></record>
-  <record id="rule_ot_30" model="hr.salary.rule"><field name="name">CR - Hora extra en feriado 3.0</field><field name="code">CR_OT_30</field><field name="sequence">62</field><field name="category_id" ref="cat_overtime"/><field name="condition_select">none</field><field name="amount_select">code</field><field name="amount_python_compute">result = payslip._cr_input_hours_amount('CR_OT_30', 3.0)</field><field name="struct_id" ref="structure_monthly"/></record>
-  <record id="rule_reimbursement" model="hr.salary.rule"><field name="name">CR - Reembolsos no salariales</field><field name="code">CR_REIMBURSEMENT</field><field name="sequence">80</field><field name="category_id" ref="cat_reimbursement"/><field name="condition_select">none</field><field name="amount_select">code</field><field name="amount_python_compute">result = payslip._cr_input_amount('CR_REIMBURSEMENT')</field><field name="struct_id" ref="structure_monthly"/></record>
-  <record id="rule_gross" model="hr.salary.rule"><field name="name">CR - Salario bruto gravable</field><field name="code">GROSS</field><field name="sequence">100</field><field name="category_id" ref="hr_payroll.GROSS"/><field name="condition_select">none</field><field name="amount_select">code</field><field name="amount_python_compute">result = categories.BASIC + categories.VARIABLE + categories.OVERTIME + categories.ALLOWANCE + categories.LEGAL_DED</field><field name="struct_id" ref="structure_monthly"/></record>
-  <record id="rule_social_employee" model="hr.salary.rule"><field name="name">CR - Cargas sociales trabajador</field><field name="code">CR_SOC_EMP</field><field name="sequence">110</field><field name="category_id" ref="cat_employee_social"/><field name="condition_select">none</field><field name="amount_select">code</field><field name="amount_python_compute">result = -payslip._cr_compute_social_employee(categories.GROSS)</field><field name="struct_id" ref="structure_monthly"/></record>
-  <record id="rule_income_tax" model="hr.salary.rule"><field name="name">CR - Impuesto sobre la renta</field><field name="code">CR_RENTA</field><field name="sequence">120</field><field name="category_id" ref="cat_tax"/><field name="condition_select">none</field><field name="amount_select">code</field><field name="amount_python_compute">result = -payslip._cr_compute_income_tax(categories.GROSS)</field><field name="struct_id" ref="structure_monthly"/></record>
-  <record id="rule_recurring_deductions" model="hr.salary.rule"><field name="name">CR - Pensiones, embargos, préstamos y deducciones recurrentes</field><field name="code">CR_RECUR_DED</field><field name="sequence">130</field><field name="category_id" ref="cat_legal_ded"/><field name="condition_select">none</field><field name="amount_select">code</field><field name="amount_python_compute">result = -payslip._cr_compute_recurring_deductions(categories.GROSS)</field><field name="struct_id" ref="structure_monthly"/></record>
-  <record id="rule_other_deduction" model="hr.salary.rule"><field name="name">CR - Otras deducciones</field><field name="code">CR_OTHER_DED</field><field name="sequence">140</field><field name="category_id" ref="cat_vol_ded"/><field name="condition_select">none</field><field name="amount_select">code</field><field name="amount_python_compute">result = -abs(payslip._cr_input_amount('CR_OTHER_DED'))</field><field name="struct_id" ref="structure_monthly"/></record>
-  <record id="rule_net" model="hr.salary.rule"><field name="name">CR - Salario neto</field><field name="code">NET</field><field name="sequence">200</field><field name="category_id" ref="hr_payroll.NET"/><field name="condition_select">none</field><field name="amount_select">code</field><field name="amount_python_compute">result = categories.GROSS + categories.REIMBURSEMENT + categories.EMPLOYEE_SOC + categories.TAX + categories.LEGAL_DED + categories.VOL_DED</field><field name="struct_id" ref="structure_monthly"/></record>
-  <record id="rule_employer_social" model="hr.salary.rule"><field name="name">CR - Cargas sociales patronales</field><field name="code">CR_SOC_PAT</field><field name="sequence">300</field><field name="category_id" ref="cat_employer_social"/><field name="condition_select">none</field><field name="amount_select">code</field><field name="amount_python_compute">result = payslip._cr_compute_social_employer(categories.GROSS)</field><field name="appears_on_payslip">False</field><field name="struct_id" ref="structure_monthly"/></record>
-  <record id="rule_aguinaldo_provision" model="hr.salary.rule"><field name="name">CR - Provisión aguinaldo</field><field name="code">CR_AGUINALDO_PROV</field><field name="sequence">310</field><field name="category_id" ref="cat_provision"/><field name="condition_select">none</field><field name="amount_select">code</field><field name="amount_python_compute">result = max(categories.GROSS, 0.0) / 12.0</field><field name="appears_on_payslip">False</field><field name="struct_id" ref="structure_monthly"/></record>
-  <record id="rule_vacation_provision" model="hr.salary.rule"><field name="name">CR - Provisión vacaciones configurable</field><field name="code">CR_VACATION_PROV</field><field name="sequence">311</field><field name="category_id" ref="cat_provision"/><field name="condition_select">none</field><field name="amount_select">code</field><field name="amount_python_compute">result = max(categories.GROSS, 0.0) * 0.0416666667</field><field name="appears_on_payslip">False</field><field name="struct_id" ref="structure_monthly"/></record>
-
-  <record id="rule_aguinaldo" model="hr.salary.rule"><field name="name">CR - Aguinaldo legal</field><field name="code">CR_AGUINALDO</field><field name="sequence">10</field><field name="category_id" ref="hr_payroll.GROSS"/><field name="condition_select">none</field><field name="amount_select">code</field><field name="amount_python_compute">result = payslip._cr_compute_aguinaldo()</field><field name="struct_id" ref="structure_aguinaldo"/></record>
-  <record id="rule_aguinaldo_net" model="hr.salary.rule"><field name="name">CR - Neto aguinaldo</field><field name="code">NET</field><field name="sequence">200</field><field name="category_id" ref="hr_payroll.NET"/><field name="condition_select">none</field><field name="amount_select">code</field><field name="amount_python_compute">result = categories.GROSS</field><field name="struct_id" ref="structure_aguinaldo"/></record>
-
-  <record id="rule_extra_income" model="hr.salary.rule"><field name="name">CR - Pago extraordinario</field><field name="code">GROSS</field><field name="sequence">10</field><field name="category_id" ref="hr_payroll.GROSS"/><field name="condition_select">none</field><field name="amount_select">code</field><field name="amount_python_compute">result = payslip._cr_variable_taxable_inputs()</field><field name="struct_id" ref="structure_extraordinary"/></record>
-  <record id="rule_extra_social" model="hr.salary.rule"><field name="name">CR - Cargas sociales extraordinario</field><field name="code">CR_SOC_EMP</field><field name="sequence">110</field><field name="category_id" ref="cat_employee_social"/><field name="condition_select">none</field><field name="amount_select">code</field><field name="amount_python_compute">result = -payslip._cr_compute_social_employee(categories.GROSS)</field><field name="struct_id" ref="structure_extraordinary"/></record>
-  <record id="rule_extra_tax" model="hr.salary.rule"><field name="name">CR - Renta extraordinario</field><field name="code">CR_RENTA</field><field name="sequence">120</field><field name="category_id" ref="cat_tax"/><field name="condition_select">none</field><field name="amount_select">code</field><field name="amount_python_compute">result = -payslip._cr_compute_income_tax(categories.GROSS)</field><field name="struct_id" ref="structure_extraordinary"/></record>
-  <record id="rule_extra_net" model="hr.salary.rule"><field name="name">CR - Neto extraordinario</field><field name="code">NET</field><field name="sequence">200</field><field name="category_id" ref="hr_payroll.NET"/><field name="condition_select">none</field><field name="amount_select">code</field><field name="amount_python_compute">result = categories.GROSS + categories.EMPLOYEE_SOC + categories.TAX</field><field name="struct_id" ref="structure_extraordinary"/></record>
-
-  <record id="rule_settlement_gross" model="hr.salary.rule"><field name="name">CR - Bruto liquidación</field><field name="code">GROSS</field><field name="sequence">10</field><field name="category_id" ref="hr_payroll.GROSS"/><field name="condition_select">none</field><field name="amount_select">code</field><field name="amount_python_compute">result = payslip._cr_input_amount('CR_SETTLEMENT_SALARY') + payslip._cr_input_amount('CR_SETTLEMENT_VACATION') + payslip._cr_input_amount('CR_NOTICE') + payslip._cr_input_amount('CR_SEVERANCE') + payslip._cr_input_amount('CR_AGUINALDO_ADJ')</field><field name="struct_id" ref="structure_settlement"/></record>
-  <record id="rule_settlement_ded" model="hr.salary.rule"><field name="name">CR - Deducciones liquidación</field><field name="code">CR_RECUR_DED</field><field name="sequence">130</field><field name="category_id" ref="cat_legal_ded"/><field name="condition_select">none</field><field name="amount_select">code</field><field name="amount_python_compute">result = -payslip._cr_compute_recurring_deductions(categories.GROSS)</field><field name="struct_id" ref="structure_settlement"/></record>
-  <record id="rule_settlement_net" model="hr.salary.rule"><field name="name">CR - Neto liquidación</field><field name="code">NET</field><field name="sequence">200</field><field name="category_id" ref="hr_payroll.NET"/><field name="condition_select">none</field><field name="amount_select">code</field><field name="amount_python_compute">result = categories.GROSS + categories.LEGAL_DED</field><field name="struct_id" ref="structure_settlement"/></record>
+    <record id="rule_basic" model="hr.salary.rule">
+        <field name="name">CR - Salario base mensual</field>
+        <field name="code">BASIC</field>
+        <field name="sequence">10</field>
+        <field name="category_id" ref="hr_payroll.BASIC"/>
+        <field name="condition_select">none</field>
+        <field name="amount_select">code</field>
+        <field name="amount_python_compute">result = contract.wage</field>
+        <field name="struct_id" ref="structure_monthly"/>
+    </record>
+    <record id="rule_basic_biweekly" model="hr.salary.rule">
+        <field name="name">CR - Salario base quincenal</field>
+        <field name="code">BASIC</field>
+        <field name="sequence">10</field>
+        <field name="category_id" ref="hr_payroll.BASIC"/>
+        <field name="condition_select">none</field>
+        <field name="amount_select">code</field>
+        <field name="amount_python_compute">result = contract.wage / 2.0</field>
+        <field name="struct_id" ref="structure_biweekly"/>
+    </record>
+    <record id="rule_basic_weekly" model="hr.salary.rule">
+        <field name="name">CR - Salario base semanal</field>
+        <field name="code">BASIC</field>
+        <field name="sequence">10</field>
+        <field name="category_id" ref="hr_payroll.BASIC"/>
+        <field name="condition_select">none</field>
+        <field name="amount_select">code</field>
+        <field name="amount_python_compute">result = contract.wage * 12.0 / 52.0</field>
+        <field name="struct_id" ref="structure_weekly"/>
+    </record>
+    <record id="rule_basic_hourly" model="hr.salary.rule">
+        <field name="name">CR - Salario ordinario por horas</field>
+        <field name="code">BASIC</field>
+        <field name="sequence">10</field>
+        <field name="category_id" ref="hr_payroll.BASIC"/>
+        <field name="condition_select">none</field>
+        <field name="amount_select">code</field>
+        <field name="amount_python_compute">result = worked_days.WORK100.number_of_hours * contract.wage if worked_days.WORK100 else 0.0</field>
+        <field name="struct_id" ref="structure_hourly"/>
+    </record>
+    <record id="rule_unpaid_time" model="hr.salary.rule">
+        <field name="name">CR - Rebajo por tiempo no laborado</field>
+        <field name="code">CR_UNPAID_TIME</field>
+        <field name="sequence">20</field>
+        <field name="category_id" ref="cat_legal_ded"/>
+        <field name="condition_select">none</field>
+        <field name="amount_select">code</field>
+        <field name="amount_python_compute">result = -payslip._cr_unpaid_time_amount()</field>
+        <field name="struct_id" ref="structure_monthly"/>
+    </record>
+    <record id="rule_vacation_pay" model="hr.salary.rule">
+        <field name="name">CR - Vacaciones pagadas</field>
+        <field name="code">CR_VACATION_PAY</field>
+        <field name="sequence">30</field>
+        <field name="category_id" ref="cat_allowance"/>
+        <field name="condition_select">none</field>
+        <field name="amount_select">code</field>
+        <field name="amount_python_compute">result = payslip._cr_input_amount('CR_VACATION_PAY')</field>
+        <field name="struct_id" ref="structure_monthly"/>
+    </record>
+    <record id="rule_disability_pay" model="hr.salary.rule">
+        <field name="name">CR - Pagos patronales por incapacidad/licencias</field>
+        <field name="code">CR_DISABILITY_PAY</field>
+        <field name="sequence">31</field>
+        <field name="category_id" ref="cat_allowance"/>
+        <field name="condition_select">none</field>
+        <field name="amount_select">code</field>
+        <field name="amount_python_compute">result = payslip._cr_input_amount('CR_CCSS_DISABILITY_PAY') + payslip._cr_input_amount('CR_INS_DISABILITY_PAY') + payslip._cr_input_amount('CR_MATERNITY_PAY') + payslip._cr_input_amount('CR_PATERNITY_PAY')</field>
+        <field name="struct_id" ref="structure_monthly"/>
+    </record>
+    <record id="rule_commission" model="hr.salary.rule">
+        <field name="name">CR - Comisiones</field>
+        <field name="code">CR_COMMISSION</field>
+        <field name="sequence">50</field>
+        <field name="category_id" ref="cat_variable"/>
+        <field name="condition_select">none</field>
+        <field name="amount_select">code</field>
+        <field name="amount_python_compute">result = payslip._cr_input_amount('CR_COMMISSION')</field>
+        <field name="struct_id" ref="structure_monthly"/>
+    </record>
+    <record id="rule_bonus" model="hr.salary.rule">
+        <field name="name">CR - Bonos, incentivos y productividad</field>
+        <field name="code">CR_BONUS</field>
+        <field name="sequence">51</field>
+        <field name="category_id" ref="cat_variable"/>
+        <field name="condition_select">none</field>
+        <field name="amount_select">code</field>
+        <field name="amount_python_compute">result = payslip._cr_input_amount('CR_BONUS') + payslip._cr_input_amount('CR_INCENTIVE') + payslip._cr_input_amount('CR_PRODUCTIVITY')</field>
+        <field name="struct_id" ref="structure_monthly"/>
+    </record>
+    <record id="rule_availability" model="hr.salary.rule">
+        <field name="name">CR - Disponibilidad y guardias</field>
+        <field name="code">CR_AVAILABILITY</field>
+        <field name="sequence">52</field>
+        <field name="category_id" ref="cat_variable"/>
+        <field name="condition_select">none</field>
+        <field name="amount_select">code</field>
+        <field name="amount_python_compute">result = payslip._cr_input_amount('CR_AVAILABILITY')</field>
+        <field name="struct_id" ref="structure_monthly"/>
+    </record>
+    <record id="rule_retroactive" model="hr.salary.rule">
+        <field name="name">CR - Retroactivos y diferencias salariales</field>
+        <field name="code">CR_RETROACTIVE</field>
+        <field name="sequence">53</field>
+        <field name="category_id" ref="cat_variable"/>
+        <field name="condition_select">none</field>
+        <field name="amount_select">code</field>
+        <field name="amount_python_compute">result = payslip._cr_input_amount('CR_RETROACTIVE') + payslip._cr_input_amount('CR_SALARY_DIFF')</field>
+        <field name="struct_id" ref="structure_monthly"/>
+    </record>
+    <record id="rule_other_income" model="hr.salary.rule">
+        <field name="name">CR - Otros ingresos y viáticos salariales</field>
+        <field name="code">CR_OTHER_INCOME</field>
+        <field name="sequence">54</field>
+        <field name="category_id" ref="cat_variable"/>
+        <field name="condition_select">none</field>
+        <field name="amount_select">code</field>
+        <field name="amount_python_compute">result = payslip._cr_input_amount('CR_OTHER_INCOME') + payslip._cr_input_amount('CR_VIATIC_TAXABLE')</field>
+        <field name="struct_id" ref="structure_monthly"/>
+    </record>
+    <record id="rule_ot_15" model="hr.salary.rule">
+        <field name="name">CR - Horas extra 1.5</field>
+        <field name="code">CR_OT_15</field>
+        <field name="sequence">60</field>
+        <field name="category_id" ref="cat_overtime"/>
+        <field name="condition_select">none</field>
+        <field name="amount_select">code</field>
+        <field name="amount_python_compute">result = payslip._cr_input_hours_amount('CR_OT_15', 1.5)</field>
+        <field name="struct_id" ref="structure_monthly"/>
+    </record>
+    <record id="rule_ot_20" model="hr.salary.rule">
+        <field name="name">CR - Pago doble / feriado trabajado</field>
+        <field name="code">CR_OT_20</field>
+        <field name="sequence">61</field>
+        <field name="category_id" ref="cat_overtime"/>
+        <field name="condition_select">none</field>
+        <field name="amount_select">code</field>
+        <field name="amount_python_compute">result = payslip._cr_input_hours_amount('CR_OT_20', 2.0)</field>
+        <field name="struct_id" ref="structure_monthly"/>
+    </record>
+    <record id="rule_ot_30" model="hr.salary.rule">
+        <field name="name">CR - Hora extra en feriado 3.0</field>
+        <field name="code">CR_OT_30</field>
+        <field name="sequence">62</field>
+        <field name="category_id" ref="cat_overtime"/>
+        <field name="condition_select">none</field>
+        <field name="amount_select">code</field>
+        <field name="amount_python_compute">result = payslip._cr_input_hours_amount('CR_OT_30', 3.0)</field>
+        <field name="struct_id" ref="structure_monthly"/>
+    </record>
+    <record id="rule_reimbursement" model="hr.salary.rule">
+        <field name="name">CR - Reembolsos no salariales</field>
+        <field name="code">CR_REIMBURSEMENT</field>
+        <field name="sequence">80</field>
+        <field name="category_id" ref="cat_reimbursement"/>
+        <field name="condition_select">none</field>
+        <field name="amount_select">code</field>
+        <field name="amount_python_compute">result = payslip._cr_input_amount('CR_REIMBURSEMENT')</field>
+        <field name="struct_id" ref="structure_monthly"/>
+    </record>
+    <record id="rule_gross" model="hr.salary.rule">
+        <field name="name">CR - Salario bruto gravable</field>
+        <field name="code">GROSS</field>
+        <field name="sequence">100</field>
+        <field name="category_id" ref="hr_payroll.GROSS"/>
+        <field name="condition_select">none</field>
+        <field name="amount_select">code</field>
+        <field name="amount_python_compute">basic = getattr(categories, 'BASIC', 0.0)
+variable = getattr(categories, 'VARIABLE', 0.0)
+overtime = getattr(categories, 'OVERTIME', 0.0)
+allowance = getattr(categories, 'ALLOWANCE', 0.0)
+unpaid = getattr(rules, 'CR_UNPAID_TIME', False)
+unpaid_amount = unpaid.total if unpaid else 0.0
+result = basic + variable + overtime + allowance + unpaid_amount</field>
+        <field name="struct_id" ref="structure_monthly"/>
+    </record>
+    <record id="rule_income_tax" model="hr.salary.rule">
+        <field name="name">CR - Impuesto sobre la renta</field>
+        <field name="code">CR_RENTA</field>
+        <field name="sequence">120</field>
+        <field name="category_id" ref="cat_tax"/>
+        <field name="condition_select">none</field>
+        <field name="amount_select">code</field>
+        <field name="amount_python_compute">result = -payslip._cr_compute_income_tax(getattr(categories, 'GROSS', 0.0))</field>
+        <field name="struct_id" ref="structure_monthly"/>
+    </record>
+    <record id="rule_recurring_deductions" model="hr.salary.rule">
+        <field name="name">CR - Pensiones, embargos, préstamos y deducciones recurrentes</field>
+        <field name="code">CR_RECUR_DED</field>
+        <field name="sequence">130</field>
+        <field name="category_id" ref="cat_legal_ded"/>
+        <field name="condition_select">none</field>
+        <field name="amount_select">code</field>
+        <field name="amount_python_compute">result = -payslip._cr_compute_recurring_deductions(getattr(categories, 'GROSS', 0.0))</field>
+        <field name="struct_id" ref="structure_monthly"/>
+    </record>
+    <record id="rule_other_deduction" model="hr.salary.rule">
+        <field name="name">CR - Otras deducciones</field>
+        <field name="code">CR_OTHER_DED</field>
+        <field name="sequence">140</field>
+        <field name="category_id" ref="cat_vol_ded"/>
+        <field name="condition_select">none</field>
+        <field name="amount_select">code</field>
+        <field name="amount_python_compute">result = -abs(payslip._cr_input_amount('CR_OTHER_DED'))</field>
+        <field name="struct_id" ref="structure_monthly"/>
+    </record>
+    <record id="rule_net" model="hr.salary.rule">
+        <field name="name">CR - Salario neto</field>
+        <field name="code">NET</field>
+        <field name="sequence">200</field>
+        <field name="category_id" ref="hr_payroll.NET"/>
+        <field name="condition_select">none</field>
+        <field name="amount_select">code</field>
+        <field name="amount_python_compute">gross = getattr(categories, 'GROSS', 0.0)
+reimbursement = getattr(categories, 'REIMBURSEMENT', 0.0)
+employee_social = getattr(categories, 'EMPLOYEE_SOC', 0.0)
+tax = getattr(categories, 'TAX', 0.0)
+legal_ded = getattr(categories, 'LEGAL_DED', 0.0)
+vol_ded = getattr(categories, 'VOL_DED', 0.0)
+result = gross + reimbursement + employee_social + tax + legal_ded + vol_ded</field>
+        <field name="struct_id" ref="structure_monthly"/>
+    </record>
+    <record id="rule_aguinaldo_provision" model="hr.salary.rule">
+        <field name="name">CR - Provisión aguinaldo</field>
+        <field name="code">CR_AGUINALDO_PROV</field>
+        <field name="sequence">310</field>
+        <field name="category_id" ref="cat_provision"/>
+        <field name="condition_select">none</field>
+        <field name="amount_select">code</field>
+        <field name="amount_python_compute">result = max(getattr(categories, 'GROSS', 0.0), 0.0) / 12.0</field>
+        <field name="appears_on_payslip">False</field>
+        <field name="struct_id" ref="structure_monthly"/>
+    </record>
+    <record id="rule_vacation_provision" model="hr.salary.rule">
+        <field name="name">CR - Provisión vacaciones configurable</field>
+        <field name="code">CR_VACATION_PROV</field>
+        <field name="sequence">311</field>
+        <field name="category_id" ref="cat_provision"/>
+        <field name="condition_select">none</field>
+        <field name="amount_select">code</field>
+        <field name="amount_python_compute">result = max(getattr(categories, 'GROSS', 0.0), 0.0) * 0.0416666667</field>
+        <field name="appears_on_payslip">False</field>
+        <field name="struct_id" ref="structure_monthly"/>
+    </record>
+    <record id="rule_aguinaldo" model="hr.salary.rule">
+        <field name="name">CR - Aguinaldo legal</field>
+        <field name="code">CR_AGUINALDO</field>
+        <field name="sequence">10</field>
+        <field name="category_id" ref="hr_payroll.GROSS"/>
+        <field name="condition_select">none</field>
+        <field name="amount_select">code</field>
+        <field name="amount_python_compute">result = payslip._cr_compute_aguinaldo()</field>
+        <field name="struct_id" ref="structure_aguinaldo"/>
+    </record>
+    <record id="rule_aguinaldo_net" model="hr.salary.rule">
+        <field name="name">CR - Neto aguinaldo</field>
+        <field name="code">NET</field>
+        <field name="sequence">200</field>
+        <field name="category_id" ref="hr_payroll.NET"/>
+        <field name="condition_select">none</field>
+        <field name="amount_select">code</field>
+        <field name="amount_python_compute">result = getattr(categories, 'GROSS', 0.0)</field>
+        <field name="struct_id" ref="structure_aguinaldo"/>
+    </record>
+    <record id="rule_extra_income" model="hr.salary.rule">
+        <field name="name">CR - Pago extraordinario</field>
+        <field name="code">GROSS</field>
+        <field name="sequence">10</field>
+        <field name="category_id" ref="hr_payroll.GROSS"/>
+        <field name="condition_select">none</field>
+        <field name="amount_select">code</field>
+        <field name="amount_python_compute">result = payslip._cr_variable_taxable_inputs()</field>
+        <field name="struct_id" ref="structure_extraordinary"/>
+    </record>
+    <record id="rule_extra_tax" model="hr.salary.rule">
+        <field name="name">CR - Renta extraordinario</field>
+        <field name="code">CR_RENTA</field>
+        <field name="sequence">120</field>
+        <field name="category_id" ref="cat_tax"/>
+        <field name="condition_select">none</field>
+        <field name="amount_select">code</field>
+        <field name="amount_python_compute">result = -payslip._cr_compute_income_tax(getattr(categories, 'GROSS', 0.0))</field>
+        <field name="struct_id" ref="structure_extraordinary"/>
+    </record>
+    <record id="rule_extra_net" model="hr.salary.rule">
+        <field name="name">CR - Neto extraordinario</field>
+        <field name="code">NET</field>
+        <field name="sequence">200</field>
+        <field name="category_id" ref="hr_payroll.NET"/>
+        <field name="condition_select">none</field>
+        <field name="amount_select">code</field>
+        <field name="amount_python_compute">result = getattr(categories, 'GROSS', 0.0) + categories.EMPLOYEE_SOC + categories.TAX</field>
+        <field name="struct_id" ref="structure_extraordinary"/>
+    </record>
+    <record id="rule_settlement_gross" model="hr.salary.rule">
+        <field name="name">CR - Bruto liquidación</field>
+        <field name="code">GROSS</field>
+        <field name="sequence">10</field>
+        <field name="category_id" ref="hr_payroll.GROSS"/>
+        <field name="condition_select">none</field>
+        <field name="amount_select">code</field>
+        <field name="amount_python_compute">result = payslip._cr_input_amount('CR_SETTLEMENT_SALARY') + payslip._cr_input_amount('CR_SETTLEMENT_VACATION') + payslip._cr_input_amount('CR_NOTICE') + payslip._cr_input_amount('CR_SEVERANCE') + payslip._cr_input_amount('CR_AGUINALDO_ADJ')</field>
+        <field name="struct_id" ref="structure_settlement"/>
+    </record>
+    <record id="rule_settlement_ded" model="hr.salary.rule">
+        <field name="name">CR - Deducciones liquidación</field>
+        <field name="code">CR_RECUR_DED</field>
+        <field name="sequence">130</field>
+        <field name="category_id" ref="cat_legal_ded"/>
+        <field name="condition_select">none</field>
+        <field name="amount_select">code</field>
+        <field name="amount_python_compute">result = -payslip._cr_compute_recurring_deductions(getattr(categories, 'GROSS', 0.0))</field>
+        <field name="struct_id" ref="structure_settlement"/>
+    </record>
+    <record id="rule_settlement_net" model="hr.salary.rule">
+        <field name="name">CR - Neto liquidación</field>
+        <field name="code">NET</field>
+        <field name="sequence">200</field>
+        <field name="category_id" ref="hr_payroll.NET"/>
+        <field name="condition_select">none</field>
+        <field name="amount_select">code</field>
+        <field name="amount_python_compute">result = getattr(categories, 'GROSS', 0.0) + categories.LEGAL_DED</field>
+        <field name="struct_id" ref="structure_settlement"/>
+    </record>
 </odoo>

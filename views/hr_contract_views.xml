@@ -1,3 +1,34 @@
-<?xml version="1.0" encoding="utf-8"?><odoo>
-<record id="view_contract_form_cr_payroll" model="ir.ui.view"><field name="name">hr.contract.form.cr.payroll</field><field name="model">hr.contract</field><field name="inherit_id" ref="hr_contract.hr_contract_view_form"/><field name="arch" type="xml"><xpath expr="//field[@name='wage']" position="after"><field name="cr_pay_frequency"/><field name="cr_salary_mode"/><field name="cr_journey_type"/><field name="cr_hours_per_day"/><field name="cr_days_divisor"/><field name="cr_allow_advanced_leave"/></xpath></field></record>
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_contract_form_cr_payroll" model="ir.ui.view">
+        <field name="name">hr.contract.form.cr.payroll</field>
+        <field name="model">hr.contract</field>
+        <field name="inherit_id" ref="hr_contract.hr_contract_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="Nómina Costa Rica" name="cr_payroll_configuration">
+                    <group>
+                        <group string="Configuración salarial">
+                            <field name="cr_pay_frequency"/>
+                            <field name="cr_salary_mode"/>
+                            <field name="cr_structure_id" readonly="1"/>
+                            <field name="wage" string="Salario pactado"/>
+                        </group>
+                        <group string="Jornada laboral">
+                            <field name="cr_journey_type"/>
+                            <field name="cr_hours_per_day"/>
+                            <field name="cr_days_divisor"/>
+                            <field name="cr_allow_advanced_leave"/>
+                        </group>
+                    </group>
+                    <separator string="Referencia"/>
+                    <p class="text-muted">
+                        El tipo de estructura agrupa todas las estructuras de Costa Rica.
+                        La frecuencia de pago determina si se utiliza la estructura mensual,
+                        quincenal, semanal o por horas al generar el recibo.
+                    </p>
+                </page>
+            </xpath>
+        </field>
+    </record>
 </odoo>
