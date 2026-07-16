@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+
+    <!-- Aportes del trabajador -->
+
     <record id="rule_sem_employee" model="hr.salary.rule">
         <field name="name">CR - CCSS SEM trabajador</field>
         <field name="code">CR_SEM_EMP</field>
@@ -7,9 +10,13 @@
         <field name="category_id" ref="cat_employee_social"/>
         <field name="condition_select">none</field>
         <field name="amount_select">code</field>
-        <field name="amount_python_compute">result = -payslip._cr_compute_social_component('SEM_EMP', getattr(categories, 'GROSS', 0.0))</field>
+        <field name="amount_python_compute"><![CDATA[
+gross = categories.get("GROSS", 0.0)
+result = -payslip._cr_compute_social_component("SEM_EMP", gross)
+        ]]></field>
         <field name="struct_id" ref="structure_monthly"/>
     </record>
+
     <record id="rule_ivm_employee" model="hr.salary.rule">
         <field name="name">CR - CCSS IVM trabajador</field>
         <field name="code">CR_IVM_EMP</field>
@@ -17,9 +24,13 @@
         <field name="category_id" ref="cat_employee_social"/>
         <field name="condition_select">none</field>
         <field name="amount_select">code</field>
-        <field name="amount_python_compute">result = -payslip._cr_compute_social_component('IVM_EMP', getattr(categories, 'GROSS', 0.0))</field>
+        <field name="amount_python_compute"><![CDATA[
+gross = categories.get("GROSS", 0.0)
+result = -payslip._cr_compute_social_component("IVM_EMP", gross)
+        ]]></field>
         <field name="struct_id" ref="structure_monthly"/>
     </record>
+
     <record id="rule_bp_employee" model="hr.salary.rule">
         <field name="name">CR - Banco Popular trabajador</field>
         <field name="code">CR_BP_EMP</field>
@@ -27,9 +38,15 @@
         <field name="category_id" ref="cat_employee_social"/>
         <field name="condition_select">none</field>
         <field name="amount_select">code</field>
-        <field name="amount_python_compute">result = -payslip._cr_compute_social_component('BP_EMP', getattr(categories, 'GROSS', 0.0))</field>
+        <field name="amount_python_compute"><![CDATA[
+gross = categories.get("GROSS", 0.0)
+result = -payslip._cr_compute_social_component("BP_EMP", gross)
+        ]]></field>
         <field name="struct_id" ref="structure_monthly"/>
     </record>
+
+    <!-- Aportes patronales -->
+
     <record id="rule_sem_employer" model="hr.salary.rule">
         <field name="name">CR - CCSS SEM patrono</field>
         <field name="code">CR_SEM_PAT</field>
@@ -37,10 +54,14 @@
         <field name="category_id" ref="cat_employer_social"/>
         <field name="condition_select">none</field>
         <field name="amount_select">code</field>
-        <field name="amount_python_compute">result = payslip._cr_compute_social_component('SEM_PAT', getattr(categories, 'GROSS', 0.0))</field>
+        <field name="amount_python_compute"><![CDATA[
+gross = categories.get("GROSS", 0.0)
+result = payslip._cr_compute_social_component("SEM_PAT", gross)
+        ]]></field>
         <field name="appears_on_payslip">False</field>
         <field name="struct_id" ref="structure_monthly"/>
     </record>
+
     <record id="rule_ivm_employer" model="hr.salary.rule">
         <field name="name">CR - CCSS IVM patrono</field>
         <field name="code">CR_IVM_PAT</field>
@@ -48,10 +69,14 @@
         <field name="category_id" ref="cat_employer_social"/>
         <field name="condition_select">none</field>
         <field name="amount_select">code</field>
-        <field name="amount_python_compute">result = payslip._cr_compute_social_component('IVM_PAT', getattr(categories, 'GROSS', 0.0))</field>
+        <field name="amount_python_compute"><![CDATA[
+gross = categories.get("GROSS", 0.0)
+result = payslip._cr_compute_social_component("IVM_PAT", gross)
+        ]]></field>
         <field name="appears_on_payslip">False</field>
         <field name="struct_id" ref="structure_monthly"/>
     </record>
+
     <record id="rule_bp_employer" model="hr.salary.rule">
         <field name="name">CR - Banco Popular patrono</field>
         <field name="code">CR_BP_PAT</field>
@@ -59,10 +84,14 @@
         <field name="category_id" ref="cat_employer_social"/>
         <field name="condition_select">none</field>
         <field name="amount_select">code</field>
-        <field name="amount_python_compute">result = payslip._cr_compute_social_component('BP_PAT', getattr(categories, 'GROSS', 0.0))</field>
+        <field name="amount_python_compute"><![CDATA[
+gross = categories.get("GROSS", 0.0)
+result = payslip._cr_compute_social_component("BP_PAT", gross)
+        ]]></field>
         <field name="appears_on_payslip">False</field>
         <field name="struct_id" ref="structure_monthly"/>
     </record>
+
     <record id="rule_fodesaf_employer" model="hr.salary.rule">
         <field name="name">CR - Asignaciones Familiares patrono</field>
         <field name="code">CR_FODESAF_PAT</field>
@@ -70,10 +99,14 @@
         <field name="category_id" ref="cat_employer_social"/>
         <field name="condition_select">none</field>
         <field name="amount_select">code</field>
-        <field name="amount_python_compute">result = payslip._cr_compute_social_component('FODESAF_PAT', getattr(categories, 'GROSS', 0.0))</field>
+        <field name="amount_python_compute"><![CDATA[
+gross = categories.get("GROSS", 0.0)
+result = payslip._cr_compute_social_component("FODESAF_PAT", gross)
+        ]]></field>
         <field name="appears_on_payslip">False</field>
         <field name="struct_id" ref="structure_monthly"/>
     </record>
+
     <record id="rule_imas_employer" model="hr.salary.rule">
         <field name="name">CR - IMAS patrono</field>
         <field name="code">CR_IMAS_PAT</field>
@@ -81,10 +114,14 @@
         <field name="category_id" ref="cat_employer_social"/>
         <field name="condition_select">none</field>
         <field name="amount_select">code</field>
-        <field name="amount_python_compute">result = payslip._cr_compute_social_component('IMAS_PAT', getattr(categories, 'GROSS', 0.0))</field>
+        <field name="amount_python_compute"><![CDATA[
+gross = categories.get("GROSS", 0.0)
+result = payslip._cr_compute_social_component("IMAS_PAT", gross)
+        ]]></field>
         <field name="appears_on_payslip">False</field>
         <field name="struct_id" ref="structure_monthly"/>
     </record>
+
     <record id="rule_ina_employer" model="hr.salary.rule">
         <field name="name">CR - INA patrono</field>
         <field name="code">CR_INA_PAT</field>
@@ -92,10 +129,14 @@
         <field name="category_id" ref="cat_employer_social"/>
         <field name="condition_select">none</field>
         <field name="amount_select">code</field>
-        <field name="amount_python_compute">result = payslip._cr_compute_social_component('INA_PAT', getattr(categories, 'GROSS', 0.0))</field>
+        <field name="amount_python_compute"><![CDATA[
+gross = categories.get("GROSS", 0.0)
+result = payslip._cr_compute_social_component("INA_PAT", gross)
+        ]]></field>
         <field name="appears_on_payslip">False</field>
         <field name="struct_id" ref="structure_monthly"/>
     </record>
+
     <record id="rule_fcl_employer" model="hr.salary.rule">
         <field name="name">CR - Fondo de Capitalización Laboral</field>
         <field name="code">CR_FCL_PAT</field>
@@ -103,10 +144,14 @@
         <field name="category_id" ref="cat_employer_social"/>
         <field name="condition_select">none</field>
         <field name="amount_select">code</field>
-        <field name="amount_python_compute">result = payslip._cr_compute_social_component('FCL_PAT', getattr(categories, 'GROSS', 0.0))</field>
+        <field name="amount_python_compute"><![CDATA[
+gross = categories.get("GROSS", 0.0)
+result = payslip._cr_compute_social_component("FCL_PAT", gross)
+        ]]></field>
         <field name="appears_on_payslip">False</field>
         <field name="struct_id" ref="structure_monthly"/>
     </record>
+
     <record id="rule_rop_employer" model="hr.salary.rule">
         <field name="name">CR - Régimen Obligatorio de Pensiones</field>
         <field name="code">CR_ROP_PAT</field>
@@ -114,8 +159,12 @@
         <field name="category_id" ref="cat_employer_social"/>
         <field name="condition_select">none</field>
         <field name="amount_select">code</field>
-        <field name="amount_python_compute">result = payslip._cr_compute_social_component('ROP_PAT', getattr(categories, 'GROSS', 0.0))</field>
+        <field name="amount_python_compute"><![CDATA[
+gross = categories.get("GROSS", 0.0)
+result = payslip._cr_compute_social_component("ROP_PAT", gross)
+        ]]></field>
         <field name="appears_on_payslip">False</field>
         <field name="struct_id" ref="structure_monthly"/>
     </record>
+
 </odoo>

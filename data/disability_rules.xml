@@ -1,7 +1,69 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo noupdate="1">
-  <!-- Las tasas se entregan desactivadas hasta validación formal con el cliente/asesoría laboral. -->
-  <record id="disability_ccss_initial" model="cr.payroll.disability.rule"><field name="name">CCSS - tramo inicial configurable</field><field name="code">CCSS</field><field name="day_from">1</field><field name="day_to">3</field><field name="employer_rate">0</field><field name="subsidy_rate">0</field><field name="date_from">2026-01-01</field><field name="active">False</field><field name="notes">Definir porcentajes y tratamiento exacto antes del go-live.</field></record>
-  <record id="disability_ccss_later" model="cr.payroll.disability.rule"><field name="name">CCSS - tramo posterior configurable</field><field name="code">CCSS</field><field name="day_from">4</field><field name="employer_rate">0</field><field name="subsidy_rate">0</field><field name="date_from">2026-01-01</field><field name="active">False</field><field name="notes">Definir porcentajes y tratamiento exacto antes del go-live.</field></record>
-  <record id="disability_ins" model="cr.payroll.disability.rule"><field name="name">INS - riesgo laboral configurable</field><field name="code">INS</field><field name="day_from">1</field><field name="employer_rate">0</field><field name="subsidy_rate">0</field><field name="date_from">2026-01-01</field><field name="active">False</field><field name="notes">Depende de póliza, tipo de riesgo y resolución.</field></record>
+    <!--
+      Perfil base configurable para Costa Rica.
+      CCSS: perfil operacional habitual de 50 % patrono durante días 1-3 y subsidio institucional desde el día 4.
+      Maternidad: distribución 50 % patrono / 50 % CCSS.
+      INS queda deliberadamente sin activar: el porcentaje y la forma de pago deben coincidir con la resolución/póliza del caso.
+    -->
+    <record id="disability_ccss_initial" model="cr.payroll.disability.rule">
+        <field name="name">CCSS - primeros tres días</field>
+        <field name="code">CCSS</field>
+        <field name="leave_type_id" ref="leave_type_cr_ccss"/>
+        <field name="day_from">1</field>
+        <field name="day_to">3</field>
+        <field name="deduction_rate">100</field>
+        <field name="employer_rate">50</field>
+        <field name="subsidy_rate">0</field>
+        <field name="subsidy_paid_in_payroll">False</field>
+        <field name="date_from">2026-01-01</field>
+        <field name="active">True</field>
+        <field name="source">Reglamento del Seguro de Salud CCSS; validar política interna</field>
+        <field name="notes">Rebaja el salario ordinario de los días ausentes y reconoce la parte patronal configurada.</field>
+    </record>
+
+    <record id="disability_ccss_later" model="cr.payroll.disability.rule">
+        <field name="name">CCSS - desde el cuarto día</field>
+        <field name="code">CCSS</field>
+        <field name="leave_type_id" ref="leave_type_cr_ccss"/>
+        <field name="day_from">4</field>
+        <field name="deduction_rate">100</field>
+        <field name="employer_rate">0</field>
+        <field name="subsidy_rate">60</field>
+        <field name="subsidy_paid_in_payroll">False</field>
+        <field name="date_from">2026-01-01</field>
+        <field name="active">True</field>
+        <field name="source">Reglamento del Seguro de Salud CCSS; validar requisitos del subsidio</field>
+        <field name="notes">El subsidio no se suma al neto salvo que la empresa active Adelantar subsidio en planilla.</field>
+    </record>
+
+    <record id="disability_maternity" model="cr.payroll.disability.rule">
+        <field name="name">Licencia de maternidad - distribución patrono/CCSS</field>
+        <field name="code">MATERNITY</field>
+        <field name="leave_type_id" ref="leave_type_cr_maternity"/>
+        <field name="day_from">1</field>
+        <field name="deduction_rate">100</field>
+        <field name="employer_rate">50</field>
+        <field name="subsidy_rate">50</field>
+        <field name="subsidy_paid_in_payroll">False</field>
+        <field name="date_from">2026-01-01</field>
+        <field name="active">True</field>
+        <field name="source">Código de Trabajo, licencia de maternidad; validar procedimiento CCSS</field>
+        <field name="notes">Active Adelantar subsidio en planilla cuando la empresa pague también la porción institucional y gestione su recuperación.</field>
+    </record>
+
+    <record id="disability_ins" model="cr.payroll.disability.rule">
+        <field name="name">INS - incapacidad temporal por riesgo del trabajo</field>
+        <field name="code">INS</field>
+        <field name="leave_type_id" ref="leave_type_cr_ins"/>
+        <field name="day_from">1</field>
+        <field name="deduction_rate">100</field>
+        <field name="employer_rate">0</field>
+        <field name="subsidy_rate">0</field>
+        <field name="subsidy_paid_in_payroll">False</field>
+        <field name="date_from">2026-01-01</field>
+        <field name="active">False</field>
+        <field name="source">Póliza y resolución del INS</field>
+        <field name="notes">Debe activarse con el porcentaje y modalidad indicados por la póliza o resolución del INS. El sistema bloqueará el cierre si existe una incapacidad INS sin regla activa.</field>
+    </record>
 </odoo>

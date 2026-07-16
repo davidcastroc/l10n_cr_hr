@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-  <record id="leave_type_cr_vacation" model="hr.leave.type"><field name="name">CR - Vacaciones</field><field name="requires_allocation">yes</field><field name="request_unit">day</field></record>
-  <record id="leave_type_cr_unpaid" model="hr.leave.type"><field name="name">CR - Permiso sin goce</field><field name="requires_allocation">no</field><field name="request_unit">day</field><field name="work_entry_type_id" ref="work_entry_unpaid"/></record>
-  <record id="leave_type_cr_paid" model="hr.leave.type"><field name="name">CR - Permiso con goce</field><field name="requires_allocation">no</field><field name="request_unit">day</field></record>
-  <record id="leave_type_cr_ccss" model="hr.leave.type"><field name="name">CR - Incapacidad CCSS</field><field name="requires_allocation">no</field><field name="request_unit">day</field><field name="work_entry_type_id" ref="work_entry_sick_ccss"/></record>
-  <record id="leave_type_cr_ins" model="hr.leave.type"><field name="name">CR - Incapacidad INS</field><field name="requires_allocation">no</field><field name="request_unit">day</field><field name="work_entry_type_id" ref="work_entry_sick_ins"/></record>
-  <record id="leave_type_cr_maternity" model="hr.leave.type"><field name="name">CR - Licencia maternidad</field><field name="requires_allocation">no</field><field name="request_unit">day</field><field name="work_entry_type_id" ref="work_entry_maternity"/></record>
-  <record id="leave_type_cr_paternity" model="hr.leave.type"><field name="name">CR - Licencia paternidad</field><field name="requires_allocation">no</field><field name="request_unit">day</field></record>
+    <record id="leave_type_cr_vacation" model="hr.leave.type"><field name="name">CR - Vacaciones</field><field name="requires_allocation">yes</field><field name="request_unit">day</field><field name="work_entry_type_id" ref="work_entry_vacation"/></record>
+    <record id="leave_type_cr_unpaid" model="hr.leave.type"><field name="name">CR - Permiso sin goce</field><field name="requires_allocation">no</field><field name="request_unit">day</field><field name="work_entry_type_id" ref="work_entry_unpaid"/></record>
+    <record id="leave_type_cr_paid" model="hr.leave.type"><field name="name">CR - Permiso con goce</field><field name="requires_allocation">no</field><field name="request_unit">day</field><field name="work_entry_type_id" ref="work_entry_paid_leave"/></record>
+    <record id="leave_type_cr_ccss" model="hr.leave.type"><field name="name">CR - Incapacidad CCSS</field><field name="requires_allocation">no</field><field name="request_unit">day</field><field name="work_entry_type_id" ref="work_entry_sick_ccss"/></record>
+    <record id="leave_type_cr_ins" model="hr.leave.type"><field name="name">CR - Incapacidad INS</field><field name="requires_allocation">no</field><field name="request_unit">day</field><field name="work_entry_type_id" ref="work_entry_sick_ins"/></record>
+    <record id="leave_type_cr_maternity" model="hr.leave.type"><field name="name">CR - Licencia de maternidad</field><field name="requires_allocation">no</field><field name="request_unit">day</field><field name="work_entry_type_id" ref="work_entry_maternity"/></record>
+    <record id="leave_type_cr_paternity" model="hr.leave.type"><field name="name">CR - Licencia de paternidad</field><field name="requires_allocation">no</field><field name="request_unit">day</field><field name="work_entry_type_id" ref="work_entry_paternity"/></record>
 </odoo>
