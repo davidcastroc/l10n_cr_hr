@@ -1,16 +1,14 @@
 # -*- coding: utf-8 -*-
 from odoo import fields, models
 
-
 class ResCompany(models.Model):
     _inherit = "res.company"
 
-    cr_payroll_rounding = fields.Selection([("cent", "Dos decimales"), ("colon", "Colón completo")], default="cent")
+    cr_payroll_rounding = fields.Selection([("cent", "Dos decimales"), ("colon", "Colón más cercano")], default="colon")
     cr_legal_bonus = fields.Boolean(string="Aguinaldo legal CR", default=True)
     cr_allow_bonus_adjustments = fields.Boolean(string="Permitir ajustes de aguinaldo", default=True)
     cr_school_salary = fields.Boolean(string="Salario escolar", default=False)
-    cr_overtime_requires_approval = fields.Boolean(string="Horas extra requieren aprobación", default=True)
-
+    cr_overtime_requires_approval = fields.Boolean(default=True)
 
 class ResConfigSettings(models.TransientModel):
     _inherit = "res.config.settings"

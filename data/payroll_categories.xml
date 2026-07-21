@@ -1,16 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<odoo>
-  <record id="cat_variable" model="hr.salary.rule.category"><field name="name">Remuneración variable</field><field name="code">VARIABLE</field></record>
-  <record id="cat_overtime" model="hr.salary.rule.category"><field name="name">Horas extra</field><field name="code">OVERTIME</field></record>
-  <record id="cat_allowance" model="hr.salary.rule.category"><field name="name">Asignaciones salariales</field><field name="code">ALLOWANCE</field></record>
-  <record id="cat_salary_adjustment" model="hr.salary.rule.category"><field name="name">Deducciones por tiempo no laborado</field><field name="code">SALARY_ADJ</field></record>
-  <record id="cat_disability_nontax" model="hr.salary.rule.category"><field name="name">Subsidios y pagos no salariales</field><field name="code">DISABILITY_NONTAX</field></record>
-  <record id="cat_reimbursement" model="hr.salary.rule.category"><field name="name">Reembolsos</field><field name="code">REIMBURSEMENT</field></record>
-  <record id="cat_employee_social" model="hr.salary.rule.category"><field name="name">Cargas sociales trabajador</field><field name="code">EMPLOYEE_SOC</field></record>
-  <record id="cat_tax" model="hr.salary.rule.category"><field name="name">Impuesto sobre la renta</field><field name="code">TAX</field></record>
-  <record id="cat_legal_ded" model="hr.salary.rule.category"><field name="name">Deducciones legales</field><field name="code">LEGAL_DED</field></record>
-  <record id="cat_vol_ded" model="hr.salary.rule.category"><field name="name">Deducciones voluntarias</field><field name="code">VOL_DED</field></record>
-  <record id="cat_employer_social" model="hr.salary.rule.category"><field name="name">Cargas patronales</field><field name="code">EMPLOYER_SOC</field></record>
-  <record id="cat_provision" model="hr.salary.rule.category"><field name="name">Provisiones</field><field name="code">PROVISION</field></record>
-    <record id="cat_aguinaldo_base" model="hr.salary.rule.category"><field name="name">Base auxiliar de aguinaldo</field><field name="code">AGUINALDO_BASE</field></record>
+<odoo noupdate="1">
+    <record id="cat_regular" model="hr.salary.rule.category"><field name="name">Remuneración ordinaria</field><field name="code">REGULAR</field></record>
+    <record id="cat_variable" model="hr.salary.rule.category"><field name="name">Remuneración variable</field><field name="code">VARIABLE</field></record>
+    <record id="cat_overtime" model="hr.salary.rule.category"><field name="name">Horas extra</field><field name="code">OVERTIME</field></record>
+    <record id="cat_allowance" model="hr.salary.rule.category"><field name="name">Asignaciones</field><field name="code">ALLOWANCE</field></record>
+    <record id="cat_reimbursement" model="hr.salary.rule.category"><field name="name">Reembolsos</field><field name="code">REIMBURSEMENT</field></record>
+    <record id="cat_employee_social" model="hr.salary.rule.category"><field name="name">Cargas sociales trabajador</field><field name="code">EMPLOYEE_SOC</field></record>
+    <record id="cat_tax" model="hr.salary.rule.category"><field name="name">Impuesto sobre la renta</field><field name="code">TAX</field></record>
+    <record id="cat_legal_ded" model="hr.salary.rule.category"><field name="name">Deducciones legales</field><field name="code">LEGAL_DED</field></record>
+    <record id="cat_vol_ded" model="hr.salary.rule.category"><field name="name">Deducciones voluntarias</field><field name="code">VOL_DED</field></record>
+    <record id="cat_employer_social" model="hr.salary.rule.category"><field name="name">Cargas patronales</field><field name="code">EMPLOYER_SOC</field></record>
+    <record id="cat_provision" model="hr.salary.rule.category"><field name="name">Provisiones</field><field name="code">PROVISION</field></record>
 </odoo>

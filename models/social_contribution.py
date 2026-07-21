@@ -2,7 +2,6 @@
 from odoo import api, fields, models
 from odoo.exceptions import ValidationError
 
-
 class CrPayrollSocialContribution(models.Model):
     _name = "cr.payroll.social.contribution"
     _description = "Contribución social CR"
@@ -15,7 +14,7 @@ class CrPayrollSocialContribution(models.Model):
     rate = fields.Float(required=True, digits=(8, 5), help="Porcentaje, por ejemplo 5.50")
     date_from = fields.Date(required=True)
     date_to = fields.Date()
-    company_id = fields.Many2one("res.company", help="Vacío significa nacional")
+    company_id = fields.Many2one("res.company", help="Vacío = nacional")
     affects_net = fields.Boolean(default=True)
     account_id = fields.Many2one("account.account")
     source = fields.Char()
@@ -23,19 +22,22 @@ class CrPayrollSocialContribution(models.Model):
 
     _sql_constraints = [("cr_social_uniq", "unique(code,date_from,company_id)", "Contribución duplicada para la vigencia.")]
 
-    @api.constrains("rate", "date_from", "date_to")
+    @api.constrains("rate")
     def _check_rate(self):
         for rec in self:
             if rec.rate < 0 or rec.rate > 100:
-                raise ValidationError("La tasa debe estar entre cero y cien.")
-            if rec.date_to and rec.date_to < rec.date_from:
-                raise ValidationError("La vigencia final no puede ser anterior a la inicial.")
+                raise ValidationError("La tasa debe estar entre 0 y 100.")
 
     @api.model
-    def rate_at(self, code, on_date, company=None):
+    def total_rate_at(self, side, on_date, company=None):
         company = company or self.env.company
-        return self.search([
-            ("code", "=", code), ("active", "=", True), ("date_from", "<=", on_date),
-            "|", ("date_to", "=", False), ("date_to", ">=", on_date),
+        recs = self.search([
+            ("side", "=", side), ("active", "=", True),
+            ("date_from", "<=", on_date), "|", ("date_to", "=", False), ("date_to", ">=", on_date),
             "|", ("company_id", "=", company.id), ("company_id", "=", False),
-        ], order="company_id desc, date_from desc", limit=1)
+        ])
+        # Evita sumar dos vigencias del mismo código.
+        selected = {}
+        for rec in recs.sorted(lambda r: (bool(r.company_id), r.date_from), reverse=True):
+            selected.setdefault(rec.code, rec)
+        return sum(r.rate for r in selected.values())
