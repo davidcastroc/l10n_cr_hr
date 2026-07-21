@@ -437,4 +437,3 @@ class CrPayrollNativeSetup(models.AbstractModel):
 
         if terminations and operations_parent:
             terminations.parent_id = operations_parent
-
