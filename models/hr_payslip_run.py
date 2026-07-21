@@ -1,28 +1,18 @@
 # -*- coding: utf-8 -*-
-from odoo import api, fields, models
+from odoo import fields, models
 
 
 class HrPayslipRun(models.Model):
     _inherit = "hr.payslip.run"
 
-    cr_process_type = fields.Selection(
-        [
-            ("ordinary", "Nómina ordinaria"),
-            ("aguinaldo", "Aguinaldo"),
-            ("extraordinary", "Pago extraordinario"),
-            ("settlement", "Liquidación laboral"),
-        ],
-        string="Tipo de proceso Costa Rica",
-        default="ordinary",
-        required=True,
-    )
-    cr_is_aguinaldo = fields.Boolean(
-        string="Es aguinaldo",
-        compute="_compute_cr_flags",
-        store=True,
-    )
+    cr_process_type = fields.Selection([
+        ("regular", "Nómina ordinaria"),
+        ("extraordinary", "Pago extraordinario"),
+        ("aguinaldo", "Aguinaldo"),
+        ("settlement", "Liquidación laboral"),
+    ], string="Tipo de proceso", default="regular", required=True)
+    cr_is_aguinaldo = fields.Boolean(compute="_compute_cr_is_aguinaldo")
 
-    @api.depends("cr_process_type")
-    def _compute_cr_flags(self):
+    def _compute_cr_is_aguinaldo(self):
         for run in self:
             run.cr_is_aguinaldo = run.cr_process_type == "aguinaldo"

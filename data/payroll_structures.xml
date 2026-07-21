@@ -1,55 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Un único tipo nativo de estructura para Costa Rica. Todas las estructuras
-         salariales se muestran vinculadas a este registro, igual que una localización
-         estándar de Odoo. -->
-    <record id="structure_type_cr" model="hr.payroll.structure.type">
-        <field name="name">Nómina Costa Rica</field>
-        <field name="country_id" ref="base.cr"/>
-        <field name="wage_type">monthly</field>
-        <field name="default_schedule_pay">bi-weekly</field>
-    </record>
-
-    <record id="structure_monthly" model="hr.payroll.structure">
-        <field name="name">CR - Nómina mensual</field>
-        <field name="code">CR_MONTHLY</field>
-        <field name="type_id" ref="structure_type_cr"/>
-        <field name="country_id" ref="base.cr"/>
-    </record>
-    <record id="structure_biweekly" model="hr.payroll.structure">
-        <field name="name">CR - Nómina quincenal</field>
-        <field name="code">CR_BIWEEKLY</field>
-        <field name="type_id" ref="structure_type_cr"/>
-        <field name="country_id" ref="base.cr"/>
-    </record>
-    <record id="structure_weekly" model="hr.payroll.structure">
-        <field name="name">CR - Nómina semanal</field>
-        <field name="code">CR_WEEKLY</field>
-        <field name="type_id" ref="structure_type_cr"/>
-        <field name="country_id" ref="base.cr"/>
-    </record>
-    <record id="structure_hourly" model="hr.payroll.structure">
-        <field name="name">CR - Nómina por horas</field>
-        <field name="code">CR_HOURLY</field>
-        <field name="type_id" ref="structure_type_cr"/>
-        <field name="country_id" ref="base.cr"/>
-    </record>
-    <record id="structure_extraordinary" model="hr.payroll.structure">
-        <field name="name">CR - Pago extraordinario</field>
-        <field name="code">CR_EXTRA</field>
-        <field name="type_id" ref="structure_type_cr"/>
-        <field name="country_id" ref="base.cr"/>
-    </record>
-    <record id="structure_aguinaldo" model="hr.payroll.structure">
-        <field name="name">CR - Aguinaldo</field>
-        <field name="code">CR_AGUINALDO</field>
-        <field name="type_id" ref="structure_type_cr"/>
-        <field name="country_id" ref="base.cr"/>
-    </record>
-    <record id="structure_settlement" model="hr.payroll.structure">
-        <field name="name">CR - Liquidación laboral</field>
-        <field name="code">CR_SETTLEMENT</field>
-        <field name="type_id" ref="structure_type_cr"/>
-        <field name="country_id" ref="base.cr"/>
-    </record>
+  <record id="structure_type_cr" model="hr.payroll.structure.type"><field name="name">Nómina Costa Rica</field><field name="country_id" ref="base.cr"/><field name="wage_type">monthly</field><field name="default_schedule_pay">bi-weekly</field></record>
+  <record id="structure_monthly" model="hr.payroll.structure"><field name="name">CR - Nómina mensual</field><field name="code">CR_MONTHLY</field><field name="type_id" ref="structure_type_cr"/><field name="country_id" ref="base.cr"/></record>
+  <record id="structure_biweekly" model="hr.payroll.structure"><field name="name">CR - Nómina quincenal</field><field name="code">CR_BIWEEKLY</field><field name="type_id" ref="structure_type_cr"/><field name="country_id" ref="base.cr"/></record>
+  <record id="structure_weekly" model="hr.payroll.structure"><field name="name">CR - Nómina semanal</field><field name="code">CR_WEEKLY</field><field name="type_id" ref="structure_type_cr"/><field name="country_id" ref="base.cr"/></record>
+  <record id="structure_hourly" model="hr.payroll.structure"><field name="name">CR - Nómina por horas</field><field name="code">CR_HOURLY</field><field name="type_id" ref="structure_type_cr"/><field name="country_id" ref="base.cr"/></record>
+  <record id="structure_extraordinary" model="hr.payroll.structure"><field name="name">CR - Pago extraordinario</field><field name="code">CR_EXTRA</field><field name="type_id" ref="structure_type_cr"/><field name="country_id" ref="base.cr"/></record>
+  <record id="structure_aguinaldo" model="hr.payroll.structure"><field name="name">CR - Aguinaldo</field><field name="code">CR_AGUINALDO</field><field name="type_id" ref="structure_type_cr"/><field name="country_id" ref="base.cr"/></record>
+  <record id="structure_settlement" model="hr.payroll.structure"><field name="name">CR - Liquidación laboral</field><field name="code">CR_SETTLEMENT</field><field name="type_id" ref="structure_type_cr"/><field name="country_id" ref="base.cr"/></record>
 </odoo>

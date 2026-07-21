@@ -1,0 +1,4 @@
+Python syntax: OK
+XML parse: OK
+No destructive salary-rule unlink: OK
+No getattr(categories): OK
