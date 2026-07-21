@@ -24,6 +24,15 @@ class HrPayslip(models.Model):
                 issues.append("El período del recibo es inválido.")
             if slip.contract_id and not slip.contract_id.resource_calendar_id:
                 issues.append("El contrato no tiene horario laboral.")
+            if slip.contract_id and slip.date_from and slip.date_to:
+                missing = slip._cr_missing_disability_configuration()
+                if missing:
+                    issues.append("Falta configurar una regla activa para: %s." % ", ".join(missing))
+                attendance_hours = slip._cr_worked_hours(["WORK100", "WORK", "ATTENDANCE"])
+                period_days = (slip.date_to - slip.date_from).days + 1
+                max_reasonable = period_days * 24.0
+                if attendance_hours > max_reasonable:
+                    issues.append("Las entradas de trabajo muestran %.2f horas en %s días; regenere las entradas del período." % (attendance_hours, period_days))
             if slip.employee_id and self.search_count([("id", "!=", slip.id), ("employee_id", "=", slip.employee_id.id), ("date_from", "=", slip.date_from), ("date_to", "=", slip.date_to), ("state", "in", ["done", "paid"]) ]):
                 issues.append("Ya existe otro recibo finalizado para el mismo empleado y período.")
             slip.cr_validation_message = "\n".join(issues)
@@ -44,6 +53,137 @@ class HrPayslip(models.Model):
     def _cr_input_amount(self, code):
         self.ensure_one()
         return sum(self.input_line_ids.filtered(lambda x: x.input_type_id.code == code).mapped("amount"))
+
+    def _cr_worked_day_lines(self, codes):
+        self.ensure_one()
+        if isinstance(codes, str):
+            codes = [codes]
+        return self.worked_days_line_ids.filtered(
+            lambda line: line.work_entry_type_id.code in codes
+        )
+
+    def _cr_worked_days(self, codes):
+        self.ensure_one()
+        return sum(self._cr_worked_day_lines(codes).mapped("number_of_days"))
+
+    def _cr_worked_hours(self, codes):
+        self.ensure_one()
+        return sum(self._cr_worked_day_lines(codes).mapped("number_of_hours"))
+
+    def _cr_has_recurring_deductions(self):
+        self.ensure_one()
+        return bool(self.env["cr.payroll.deduction"].search_count([
+            ("employee_id", "=", self.employee_id.id),
+            ("active", "=", True),
+            ("date_from", "<=", self.date_to),
+            "|", ("date_to", "=", False), ("date_to", ">=", self.date_from),
+        ]))
+
+    def _cr_disability_profiles(self):
+        """Retorna los perfiles de ausencias detectadas en las entradas de trabajo."""
+        self.ensure_one()
+        mapping = {
+            "CR_SICK_CCSS": "CCSS",
+            "CR_SICK_INS": "INS",
+            "CR_MATERNITY": "MATERNITY",
+            "CR_PATERNITY": "PATERNITY",
+        }
+        profiles = []
+        Rule = self.env["cr.payroll.disability.rule"].sudo()
+        for work_code, rule_code in mapping.items():
+            days = self._cr_worked_days(work_code)
+            hours = self._cr_worked_hours(work_code)
+            if not days and not hours:
+                continue
+            if not days and hours:
+                days = hours / (self.contract_id.cr_hours_per_day or 8.0)
+            rules = Rule.search([
+                ("code", "=", rule_code),
+                ("active", "=", True),
+                ("date_from", "<=", self.date_to),
+                "|", ("date_to", "=", False), ("date_to", ">=", self.date_from),
+                "|", ("company_id", "=", self.company_id.id), ("company_id", "=", False),
+            ], order="company_id desc, day_from")
+            profiles.append((work_code, rule_code, days, rules))
+        return profiles
+
+    def _cr_missing_disability_configuration(self):
+        self.ensure_one()
+        missing = []
+        for _work_code, rule_code, _days, rules in self._cr_disability_profiles():
+            if not rules:
+                missing.append(rule_code)
+        return sorted(set(missing))
+
+    def _cr_disability_amounts(self):
+        """Calcula rebajo, pago patronal y subsidio adelantado sin duplicar salario.
+
+        El salario fijo se calcula completo para el período. Por eso primero se rebaja
+        la porción ordinaria correspondiente a la ausencia y luego se agregan las
+        porciones que efectivamente paga la empresa.
+        """
+        self.ensure_one()
+        deduction = employer_taxable = employer_nontaxable = subsidy_advance = subsidy_info = 0.0
+        day_value = self._cr_day_value()
+        for _work_code, _rule_code, days, rules in self._cr_disability_profiles():
+            for rule in rules:
+                upper = rule.day_to or days
+                covered = max(min(days, upper) - rule.day_from + 1.0, 0.0)
+                if not covered:
+                    continue
+                base = covered * day_value
+                deduction += base * rule.deduction_rate / 100.0
+                employer = base * rule.employer_rate / 100.0
+                if rule.employer_payment_taxable:
+                    employer_taxable += employer
+                else:
+                    employer_nontaxable += employer
+                subsidy = base * rule.subsidy_rate / 100.0
+                subsidy_info += subsidy
+                if rule.subsidy_paid_in_payroll:
+                    subsidy_advance += subsidy
+        return {
+            "deduction": self._cr_round(deduction),
+            "employer_taxable": self._cr_round(employer_taxable),
+            "employer_nontaxable": self._cr_round(employer_nontaxable),
+            "subsidy_advance": self._cr_round(subsidy_advance),
+            "subsidy_info": self._cr_round(subsidy_info),
+        }
+
+    def _cr_disability_deduction_amount(self):
+        self.ensure_one()
+        return self._cr_disability_amounts()["deduction"]
+
+    def _cr_disability_employer_taxable_amount(self):
+        self.ensure_one()
+        return self._cr_disability_amounts()["employer_taxable"]
+
+    def _cr_disability_employer_nontaxable_amount(self):
+        self.ensure_one()
+        manual = (
+            self._cr_input_amount("CR_CCSS_DISABILITY_PAY")
+            + self._cr_input_amount("CR_INS_DISABILITY_PAY")
+            + self._cr_input_amount("CR_MATERNITY_PAY")
+            + self._cr_input_amount("CR_PATERNITY_PAY")
+        )
+        return self._cr_round(self._cr_disability_amounts()["employer_nontaxable"] + manual)
+
+    def _cr_disability_subsidy_advance_amount(self):
+        self.ensure_one()
+        return self._cr_disability_amounts()["subsidy_advance"]
+
+    def _cr_disability_subsidy_information(self):
+        self.ensure_one()
+        return self._cr_disability_amounts()["subsidy_info"]
+
+    def _cr_disability_total_amount(self):
+        self.ensure_one()
+        amounts = self._cr_disability_amounts()
+        return self._cr_round(
+            amounts["employer_taxable"]
+            + amounts["employer_nontaxable"]
+            + amounts["subsidy_advance"]
+        )
 
     def _cr_month_factor(self):
         self.ensure_one()
@@ -100,6 +240,18 @@ class HrPayslip(models.Model):
         ])
         prior_tax = abs(sum(prior.mapped("line_ids").filtered(lambda l: l.code == "CR_RENTA").mapped("total")))
         return self._cr_round(max(tax_total - prior_tax, 0.0))
+
+    def _cr_compute_social_component(self, code, taxable):
+        self.ensure_one()
+        Contribution = self.env["cr.payroll.social.contribution"]
+        records = Contribution.search([
+            ("code", "=", code), ("active", "=", True),
+            ("date_from", "<=", self.date_to),
+            "|", ("date_to", "=", False), ("date_to", ">=", self.date_to),
+            "|", ("company_id", "=", self.company_id.id), ("company_id", "=", False),
+        ], order="company_id desc, date_from desc", limit=1)
+        rate = records.rate if records else 0.0
+        return self._cr_round(max(taxable, 0.0) * rate / 100.0)
 
     def _cr_compute_social_employee(self, taxable):
         rate = self.env["cr.payroll.social.contribution"].total_rate_at("employee", self.date_to, self.company_id)
@@ -200,9 +352,20 @@ class HrPayslip(models.Model):
 
     def _cr_unpaid_time_amount(self):
         self.ensure_one()
-        hours = self._cr_input_amount("CR_UNPAID_HOURS") + self._cr_input_amount("CR_TARDINESS")
-        days = self._cr_input_amount("CR_UNPAID_DAYS")
-        return self._cr_round(hours * self._cr_hour_value() + days * self._cr_day_value())
+        manual_hours = self._cr_input_amount("CR_UNPAID_HOURS") + self._cr_input_amount("CR_TARDINESS")
+        manual_days = self._cr_input_amount("CR_UNPAID_DAYS")
+        work_hours = self._cr_worked_hours("CR_UNPAID")
+        work_days = self._cr_worked_days("CR_UNPAID")
+        work_amount = (
+            work_hours * self._cr_hour_value()
+            if work_hours
+            else work_days * self._cr_day_value()
+        )
+        return self._cr_round(
+            manual_hours * self._cr_hour_value()
+            + manual_days * self._cr_day_value()
+            + work_amount
+        )
 
     def _cr_variable_taxable_inputs(self):
         self.ensure_one()
@@ -222,5 +385,10 @@ class HrPayslip(models.Model):
         # Todo ingreso marcado en categorías ordinarias/variables; excluye reembolsos y el propio aguinaldo.
         eligible_codes = {"BASIC", "REGULAR", "VARIABLE", "OVERTIME", "ALLOWANCE"}
         total = sum(line.total for slip in slips for line in slip.line_ids if line.category_id.code in eligible_codes and line.code != "CR_AGUINALDO")
+        opening = self.employee_id.cr_aguinaldo_opening_earnings or 0.0
+        opening_date = self.employee_id.cr_aguinaldo_opening_date
+        if opening_date and not (start <= opening_date <= end):
+            opening = 0.0
+        total += opening
         total += self._cr_input_amount("CR_AGUINALDO_ADJ")
         return self._cr_round(max(total / 12.0, 0.0))

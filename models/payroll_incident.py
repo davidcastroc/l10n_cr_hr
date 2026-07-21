@@ -8,11 +8,11 @@ class CrPayrollIncident(models.Model):
     _description = "Incidencia de nómina Costa Rica"
     _order = "date desc, id desc"
 
-    name = fields.Char(required=True, default="Nueva incidencia")
-    employee_id = fields.Many2one("hr.employee", required=True, index=True)
-    contract_id = fields.Many2one("hr.contract", domain="[('employee_id', '=', employee_id)]")
+    name = fields.Char(string="Descripción", required=True, default="Nueva incidencia")
+    employee_id = fields.Many2one("hr.employee", string="Empleado", required=True, index=True)
+    contract_id = fields.Many2one("hr.contract", string="Contrato", domain="[('employee_id', '=', employee_id)]")
     company_id = fields.Many2one(related="employee_id.company_id", store=True, index=True)
-    date = fields.Date(required=True, default=fields.Date.context_today, index=True)
+    date = fields.Date(string="Fecha", required=True, default=fields.Date.context_today, index=True)
     incident_type = fields.Selection([
         ("commission", "Comisión"),
         ("bonus", "Bono"),
@@ -25,18 +25,18 @@ class CrPayrollIncident(models.Model):
         ("reimbursement", "Reembolso no salarial"),
         ("other_deduction", "Otra deducción"),
         ("aguinaldo_adjustment", "Ajuste de aguinaldo"),
-    ], required=True, index=True)
-    quantity = fields.Float(default=1.0)
+    ], string="Tipo de incidencia", required=True, index=True)
+    quantity = fields.Float(string="Cantidad", default=1.0)
     rate = fields.Float(string="Tarifa / valor unitario")
-    amount = fields.Monetary(compute="_compute_amount", store=True, readonly=False)
+    amount = fields.Monetary(string="Importe", compute="_compute_amount", store=True, readonly=False)
     currency_id = fields.Many2one(related="company_id.currency_id", store=True)
-    description = fields.Text()
+    description = fields.Text(string="Observaciones")
     state = fields.Selection([
         ("draft", "Borrador"), ("submitted", "Enviado"),
         ("approved", "Aprobado"), ("applied", "Aplicado"),
         ("rejected", "Rechazado"), ("cancel", "Cancelado")
-    ], default="draft", required=True, index=True)
-    payslip_id = fields.Many2one("hr.payslip", readonly=True, copy=False)
+    ], string="Estado", default="draft", required=True, index=True)
+    payslip_id = fields.Many2one("hr.payslip", string="Recibo de nómina", readonly=True, copy=False)
     attachment_ids = fields.Many2many("ir.attachment", string="Adjuntos")
 
     @api.depends("quantity", "rate")

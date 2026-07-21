@@ -1,11 +1,21 @@
-# Localización de Nómina Costa Rica para Odoo 18 Enterprise
+# RH Costa Rica - Nómina Odoo 18
 
-Versión **18.0.3.0.0**. Extiende la nómina nativa de Odoo 18; no crea una segunda nómina.
+Versión 18.0.7.0.0.
 
-Incluye estructuras mensual, quincenal, semanal, por horas, extraordinaria, aguinaldo y liquidación; ingresos variables; rebajos por tiempo no laborado; horas extra 1.5, doble y triple; CCSS y cargas patronales parametrizadas por vigencia; renta progresiva 2026 acumulada por mes; feriados; vacaciones; incapacidades configurables; deducciones con saldo; incidencias aprobables; aguinaldo legal y asistente de liquidación.
+Correcciones principales:
+
+- El nombre técnico del módulo es `l10n_cr_hr` en todas las referencias XML/Python.
+- Limpieza automática de reglas estándar duplicadas dentro de las estructuras CR.
+- Sincronización de las reglas comunes entre mensual, quincenal, semanal y por horas.
+- Estructuras especiales limitadas a las reglas que les corresponden.
+- Eliminación de reglas agregadas antiguas de cargas sociales para evitar doble cálculo.
+- Asistente de feriados idempotente: omite cualquier traslape nativo existente.
+- Etiquetas personalizadas de incapacidades completamente en español.
+- Vista de lotes compatible con `hr_payroll.hr_payslip_run_form` de Odoo 18.
+- Icono para la aplicación auxiliar RH Costa Rica.
 
 ## Importante
-Los ejemplos antiguos aportaron escenarios, no valores legales. Esta versión evita duplicados y centraliza las tasas por vigencia. Debe instalarse primero en staging y validarse con tres planillas reales. Las reglas de incapacidad permanecen desactivadas hasta confirmar el tratamiento de eTribu y la póliza INS.
 
-## Convención de inputs
-Los inputs `CR_OT_15`, `CR_OT_20`, `CR_OT_30`, `CR_UNPAID_HOURS`, `CR_UNPAID_DAYS` y `CR_TARDINESS` reciben **cantidades** (horas o días). Los demás inputs reciben montos monetarios.
+Este módulo debe instalarse y validarse primero en Odoo.sh Staging. Antes de producción se deben ejecutar planillas paralelas y validar políticas del cliente, cuentas contables, incapacidades CCSS/INS, embargos, pensiones, vacaciones, renta y aguinaldo.
+
+El plan legal de vacaciones debe configurarse con la política aprobada del cliente. El mínimo legal general corresponde a dos semanas por cada cincuenta semanas de labores continuas; el día por mes es la regla proporcional mínima en terminación antes de completar ese período.

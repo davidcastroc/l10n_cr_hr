@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<odoo noupdate="1">
+<odoo>
   <record id="input_commission" model="hr.payslip.input.type"><field name="name">CR - Comisión</field><field name="code">CR_COMMISSION</field></record>
   <record id="input_bonus" model="hr.payslip.input.type"><field name="name">CR - Bono</field><field name="code">CR_BONUS</field></record>
   <record id="input_incentive" model="hr.payslip.input.type"><field name="name">CR - Incentivo</field><field name="code">CR_INCENTIVE</field></record>
