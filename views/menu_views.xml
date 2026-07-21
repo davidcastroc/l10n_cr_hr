@@ -1,13 +1,55 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-  <menuitem id="menu_cr_payroll_root" name="Costa Rica" sequence="90" groups="hr_payroll.group_hr_payroll_manager"/>
-  <menuitem id="menu_cr_incidents" name="Incidencias" parent="menu_cr_payroll_root" action="action_cr_payroll_incident" sequence="5"/>
-  <menuitem id="menu_cr_terminations" name="Liquidaciones" parent="menu_cr_payroll_root" action="action_cr_termination" sequence="10"/>
-  <menuitem id="menu_cr_legal_parameters" name="Parámetros legales" parent="menu_cr_payroll_root" action="action_cr_payroll_legal_parameter" sequence="20"/>
-  <menuitem id="menu_cr_social_contributions" name="Cargas sociales" parent="menu_cr_payroll_root" action="action_cr_payroll_social_contribution" sequence="30"/>
-  <menuitem id="menu_cr_tax_brackets" name="Tramos de renta" parent="menu_cr_payroll_root" action="action_cr_payroll_tax_bracket" sequence="40"/>
-  <menuitem id="menu_cr_holidays" name="Feriados" parent="menu_cr_payroll_root" action="action_cr_public_holiday" sequence="50"/>
-  <menuitem id="menu_cr_disability_rules" name="Incapacidades" parent="menu_cr_payroll_root" action="action_cr_disability_rule" sequence="60"/>
-  <menuitem id="menu_cr_deductions" name="Deducciones recurrentes" parent="menu_cr_payroll_root" action="action_cr_payroll_deduction" sequence="70"/>
-  <menuitem id="menu_cr_generate_holidays" name="Generar feriados" parent="menu_cr_payroll_root" action="action_cr_generate_holidays" sequence="80"/>
+    <menuitem id="menu_cr_payroll_root"
+              name="Costa Rica"
+              sequence="90"
+              groups="hr_payroll.group_hr_payroll_manager"/>
+
+    <menuitem id="menu_cr_incidents"
+              name="Incidencias"
+              parent="menu_cr_payroll_root"
+              action="action_cr_payroll_incident"
+              sequence="5"/>
+
+    <menuitem id="menu_cr_terminations"
+              name="Liquidaciones"
+              parent="menu_cr_payroll_root"
+              action="action_cr_termination"
+              sequence="10"/>
+
+    <menuitem id="menu_cr_legal_parameters"
+              name="Parámetros legales"
+              parent="menu_cr_payroll_root"
+              action="action_cr_legal_parameter"
+              sequence="20"/>
+
+    <menuitem id="menu_cr_social_contributions"
+              name="Cargas sociales"
+              parent="menu_cr_payroll_root"
+              action="action_cr_social_contribution"
+              sequence="30"/>
+
+    <menuitem id="menu_cr_tax_brackets"
+              name="Tramos de renta"
+              parent="menu_cr_payroll_root"
+              action="action_cr_tax_bracket"
+              sequence="40"/>
+
+    <menuitem id="menu_cr_holidays"
+              name="Feriados"
+              parent="menu_cr_payroll_root"
+              action="action_cr_public_holiday"
+              sequence="50"/>
+
+    <menuitem id="menu_cr_disability_rules"
+              name="Incapacidades"
+              parent="menu_cr_payroll_root"
+              action="action_cr_disability_rule"
+              sequence="60"/>
+
+    <menuitem id="menu_cr_deductions"
+              name="Deducciones recurrentes"
+              parent="menu_cr_payroll_root"
+              action="action_cr_deduction"
+              sequence="70"/>
 </odoo>
