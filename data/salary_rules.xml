@@ -179,7 +179,7 @@
         <field name="category_id" ref="cat_overtime" />
         <field name="condition_select">python</field>
         <field name="amount_select">code</field>
-        <field name="amount_python_compute">result = payslip._cr_input_hours_amount('CR_OT_20', 2.0)</field>
+        <field name="amount_python_compute">result = payslip._cr_holiday_work_amount()</field>
         <field name="struct_id" ref="structure_monthly" />
         <field name="condition_python">result = payslip._cr_input_amount('CR_OT_20') != 0.0</field>
     </record>

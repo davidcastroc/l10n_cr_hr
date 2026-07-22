@@ -19,3 +19,15 @@ Correcciones principales:
 Este módulo debe instalarse y validarse primero en Odoo.sh Staging. Antes de producción se deben ejecutar planillas paralelas y validar políticas del cliente, cuentas contables, incapacidades CCSS/INS, embargos, pensiones, vacaciones, renta y aguinaldo.
 
 El plan legal de vacaciones debe configurarse con la política aprobada del cliente. El mínimo legal general corresponde a dos semanas por cada cincuenta semanas de labores continuas; el día por mes es la regla proporcional mínima en terminación antes de completar ese período.
+
+
+## Versión 18.0.11.0.0
+
+- Tasas CCSS 2026: SEM trabajador 5,50 %, IVM trabajador 4,33 %, SEM patrono 9,25 %, IVM patrono 5,58 %.
+- Banco Popular trabajador en 0 % y patrono en 0,25 %.
+- Bases mínimas contributivas 2026: SEM ₡346.789 e IVM ₡324.590.
+- Acumulación mensual de cargas sociales y renta para nóminas quincenales/semanales.
+- Pago de feriado trabajado: adicional sencillo en mensual/quincenal y doble en semanal.
+- Movimientos de deducciones con prevención de doble aplicación y reversión al devolver el recibo a borrador/cancelar.
+- Validación de lote antes del cierre.
+- Lactancia conectada a ausencias nativas.

@@ -46,9 +46,13 @@
         <field name="employer_rate">50</field>
         <field name="subsidy_rate">50</field>
         <field name="subsidy_paid_in_payroll">False</field>
+        <field name="employer_payment_taxable">True</field>
+        <field name="employer_payment_taxable_income">True</field>
+        <field name="affects_aguinaldo">True</field>
+        <field name="affects_vacation">True</field>
         <field name="date_from">2026-01-01</field>
         <field name="active">True</field>
-        <field name="source">Código de Trabajo, licencia de maternidad; validar procedimiento CCSS</field>
+        <field name="source">Código de Trabajo y Reglamento del Seguro de Salud CCSS</field>
         <field name="notes">Active Adelantar subsidio en planilla cuando la empresa pague también la porción institucional y gestione su recuperación.</field>
     </record>
 

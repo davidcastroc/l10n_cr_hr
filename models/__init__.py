@@ -2,6 +2,7 @@ from . import legal_parameter
 from . import social_contribution
 from . import tax_bracket
 from . import payroll_deduction
+from . import payroll_deduction_movement
 from . import hr_employee
 from . import hr_contract
 from . import res_company

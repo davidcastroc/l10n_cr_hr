@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from collections import defaultdict
-from odoo import api, fields, models
+from odoo import _, api, fields, models
 from odoo.exceptions import UserError
 
 class HrPayslip(models.Model):
@@ -10,31 +10,71 @@ class HrPayslip(models.Model):
     cr_incident_ids = fields.One2many("cr.payroll.incident", "payslip_id", string="Incidencias CR")
 
     def _compute_cr_validation_message(self):
+        WorkEntry = self.env["hr.work.entry"].sudo()
         for slip in self:
             issues = []
-            if not slip.contract_id:
+            contract = slip.contract_id
+            if not contract:
                 issues.append("Empleado sin contrato en el recibo.")
-            elif slip.contract_id.wage <= 0:
-                issues.append("El salario contractual debe ser mayor que cero.")
+            else:
+                if contract.wage <= 0:
+                    issues.append("El salario contractual debe ser mayor que cero.")
+                if not contract.resource_calendar_id:
+                    issues.append("El contrato no tiene horario laboral.")
+                if slip.date_from and contract.date_start and slip.date_from < contract.date_start:
+                    issues.append("El recibo inicia antes de la vigencia del contrato.")
+                if slip.date_to and contract.date_end and slip.date_to > contract.date_end:
+                    issues.append("El recibo finaliza después de la vigencia del contrato.")
+                if slip.date_from and slip.date_to:
+                    days = (slip.date_to - slip.date_from).days + 1
+                    expected = {
+                        "weekly": (6, 8),
+                        "biweekly": (14, 16),
+                        "monthly": (28, 31),
+                    }.get(contract.cr_pay_frequency)
+                    if expected and not expected[0] <= days <= expected[1]:
+                        issues.append(
+                            "El período de %s días no coincide con la frecuencia %s."
+                            % (days, dict(contract._fields["cr_pay_frequency"].selection).get(contract.cr_pay_frequency))
+                        )
             if not slip.employee_id.identification_id:
                 issues.append("Falta identificación del empleado.")
             if not slip.employee_id.bank_account_id:
                 issues.append("Falta cuenta bancaria del empleado.")
             if slip.date_from and slip.date_to and slip.date_from > slip.date_to:
                 issues.append("El período del recibo es inválido.")
-            if slip.contract_id and not slip.contract_id.resource_calendar_id:
-                issues.append("El contrato no tiene horario laboral.")
-            if slip.contract_id and slip.date_from and slip.date_to:
+
+            if contract and slip.date_from and slip.date_to:
                 missing = slip._cr_missing_disability_configuration()
                 if missing:
                     issues.append("Falta configurar una regla activa para: %s." % ", ".join(missing))
                 attendance_hours = slip._cr_worked_hours(["WORK100", "WORK", "ATTENDANCE"])
                 period_days = (slip.date_to - slip.date_from).days + 1
-                max_reasonable = period_days * 24.0
-                if attendance_hours > max_reasonable:
-                    issues.append("Las entradas de trabajo muestran %.2f horas en %s días; regenere las entradas del período." % (attendance_hours, period_days))
-            if slip.employee_id and self.search_count([("id", "!=", slip.id), ("employee_id", "=", slip.employee_id.id), ("date_from", "=", slip.date_from), ("date_to", "=", slip.date_to), ("state", "in", ["done", "paid"]) ]):
-                issues.append("Ya existe otro recibo finalizado para el mismo empleado y período.")
+                if attendance_hours > period_days * 24.0:
+                    issues.append(
+                        "Las entradas de trabajo muestran %.2f horas en %s días; regenere las entradas del período."
+                        % (attendance_hours, period_days)
+                    )
+                domain = [
+                    ("employee_id", "=", slip.employee_id.id),
+                    ("date_start", "<=", fields.Datetime.to_string(fields.Datetime.to_datetime(slip.date_to).replace(hour=23, minute=59, second=59))),
+                    ("date_stop", ">=", fields.Datetime.to_datetime(slip.date_from)),
+                ]
+                work_entries = WorkEntry.search(domain)
+                if "state" in WorkEntry._fields:
+                    bad_states = work_entries.filtered(lambda entry: entry.state in ("draft", "conflict"))
+                    if bad_states:
+                        issues.append("Existen entradas de trabajo en borrador o conflicto dentro del período.")
+
+            duplicate = self.search_count([
+                ("id", "!=", slip.id),
+                ("employee_id", "=", slip.employee_id.id),
+                ("date_from", "=", slip.date_from),
+                ("date_to", "=", slip.date_to),
+                ("state", "not in", ["cancel"]),
+            ])
+            if slip.employee_id and duplicate:
+                issues.append("Ya existe otro recibo para el mismo empleado y período.")
             slip.cr_validation_message = "\n".join(issues)
 
     def action_payslip_done(self):
@@ -45,6 +85,15 @@ class HrPayslip(models.Model):
         self._cr_apply_deduction_balances()
         self.mapped("cr_incident_ids").filtered(lambda x: x.state == "approved").write({"state": "applied"})
         return result
+
+
+    def action_payslip_draft(self):
+        self._cr_reverse_deduction_balances()
+        return super().action_payslip_draft()
+
+    def action_payslip_cancel(self):
+        self._cr_reverse_deduction_balances()
+        return super().action_payslip_cancel()
 
     def _cr_round(self, amount):
         self.ensure_one()
@@ -244,14 +293,61 @@ class HrPayslip(models.Model):
     def _cr_compute_social_component(self, code, taxable):
         self.ensure_one()
         Contribution = self.env["cr.payroll.social.contribution"]
-        records = Contribution.search([
-            ("code", "=", code), ("active", "=", True),
+        record = Contribution.search([
+            ("code", "=", code),
+            ("active", "=", True),
             ("date_from", "<=", self.date_to),
             "|", ("date_to", "=", False), ("date_to", ">=", self.date_to),
             "|", ("company_id", "=", self.company_id.id), ("company_id", "=", False),
         ], order="company_id desc, date_from desc", limit=1)
-        rate = records.rate if records else 0.0
-        return self._cr_round(max(taxable, 0.0) * rate / 100.0)
+        if not record or not record.rate:
+            return 0.0
+
+        month_start = self.date_to.replace(day=1)
+        prior_slips = self.search([
+            ("id", "!=", self.id),
+            ("employee_id", "=", self.employee_id.id),
+            ("company_id", "=", self.company_id.id),
+            ("date_to", ">=", month_start),
+            ("date_to", "<=", self.date_to),
+            ("state", "in", ["done", "paid"]),
+        ])
+        prior_taxable = sum(slip._cr_taxable_gross_estimate() for slip in prior_slips)
+        monthly_taxable = max(prior_taxable + max(taxable, 0.0), 0.0)
+
+        Param = self.env["cr.payroll.legal.parameter"]
+        minimum_code = {
+            "SEM_EMP": "SEM_MIN_BASE",
+            "SEM_PAT": "SEM_MIN_BASE",
+            "IVM_EMP": "IVM_MIN_BASE",
+            "IVM_PAT": "IVM_MIN_BASE",
+        }.get(code)
+        if minimum_code and monthly_taxable > 0:
+            minimum = Param.value_at(minimum_code, self.date_to, self.company_id)
+            monthly_taxable = max(monthly_taxable, minimum)
+
+        total_due = monthly_taxable * record.rate / 100.0
+        salary_code = {
+            "SEM_EMP": "CR_SEM_EMP",
+            "IVM_EMP": "CR_IVM_EMP",
+            "BP_EMP": "CR_BP_EMP",
+            "SEM_PAT": "CR_SEM_PAT",
+            "IVM_PAT": "CR_IVM_PAT",
+            "BP_PAT": "CR_BP_PAT",
+            "FODESAF_PAT": "CR_FODESAF_PAT",
+            "IMAS_PAT": "CR_IMAS_PAT",
+            "INA_PAT": "CR_INA_PAT",
+            "FCL_PAT": "CR_FCL_PAT",
+            "ROP_PAT": "CR_ROP_PAT",
+        }.get(code)
+        prior_paid = 0.0
+        if salary_code:
+            prior_paid = abs(sum(
+                prior_slips.mapped("line_ids")
+                .filtered(lambda line: line.code == salary_code)
+                .mapped("total")
+            ))
+        return self._cr_round(max(total_due - prior_paid, 0.0))
 
     def _cr_compute_social_employee(self, taxable):
         rate = self.env["cr.payroll.social.contribution"].total_rate_at("employee", self.date_to, self.company_id)
@@ -264,29 +360,75 @@ class HrPayslip(models.Model):
     def _cr_compute_recurring_deductions(self, base):
         self.ensure_one()
         deductions = self.env["cr.payroll.deduction"].search([
-            ("employee_id", "=", self.employee_id.id), ("active", "=", True),
-            ("date_from", "<=", self.date_to), "|", ("date_to", "=", False), ("date_to", ">=", self.date_from),
-        ], order="priority")
-        return self._cr_round(sum(d.amount_for_period(base) for d in deductions))
+            ("employee_id", "=", self.employee_id.id),
+            ("active", "=", True),
+            ("date_from", "<=", self.date_to),
+            "|", ("date_to", "=", False), ("date_to", ">=", self.date_from),
+        ], order="priority, id")
+        return self._cr_round(sum(
+            deduction.amount_for_period(base, payslip=self)
+            for deduction in deductions
+        ))
 
     def _cr_apply_deduction_balances(self):
+        Movement = self.env["cr.payroll.deduction.movement"].sudo()
         for slip in self:
-            amount = abs(sum(slip.line_ids.filtered(lambda l: l.code == "CR_RECUR_DED").mapped("total")))
+            if Movement.search_count([("payslip_id", "=", slip.id), ("state", "=", "applied")]):
+                continue
+            amount = abs(sum(
+                slip.line_ids.filtered(lambda line: line.code == "CR_RECUR_DED").mapped("total")
+            ))
             if not amount:
                 continue
             deductions = self.env["cr.payroll.deduction"].search([
-                ("employee_id", "=", slip.employee_id.id), ("active", "=", True), ("balance", ">", 0),
-            ], order="priority")
+                ("employee_id", "=", slip.employee_id.id),
+                ("active", "=", True),
+                ("date_from", "<=", slip.date_to),
+                "|", ("date_to", "=", False), ("date_to", ">=", slip.date_from),
+            ], order="priority, id")
             remaining = amount
             for deduction in deductions:
-                applied = min(deduction.balance, remaining)
-                deduction.balance -= applied
-                remaining -= applied
-                if deduction.balance <= 0:
-                    deduction.active = False
                 if remaining <= 0:
                     break
+                expected = deduction.amount_for_period(
+                    max(slip._cr_taxable_gross_estimate(), 0.0), payslip=slip
+                )
+                if not expected:
+                    continue
+                available = deduction.balance if deduction.balance else expected
+                applied = min(expected, available, remaining)
+                if not applied:
+                    continue
+                before = deduction.balance
+                after = max(before - applied, 0.0) if before else 0.0
+                Movement.create({
+                    "deduction_id": deduction.id,
+                    "payslip_id": slip.id,
+                    "date": slip.date_to,
+                    "amount": applied,
+                    "balance_before": before,
+                    "balance_after": after,
+                    "state": "applied",
+                })
+                if before:
+                    deduction.balance = after
+                    if after <= 0:
+                        deduction.active = False
+                remaining -= applied
 
+    def _cr_reverse_deduction_balances(self):
+        Movement = self.env["cr.payroll.deduction.movement"].sudo()
+        for slip in self:
+            movements = Movement.search([
+                ("payslip_id", "=", slip.id),
+                ("state", "=", "applied"),
+            ])
+            for movement in movements:
+                deduction = movement.deduction_id
+                if movement.balance_before:
+                    deduction.balance = movement.balance_before
+                    deduction.active = True
+                movement.state = "reversed"
 
     def _cr_incident_amount(self, incident_type):
         self.ensure_one()
@@ -349,6 +491,13 @@ class HrPayslip(models.Model):
         self.ensure_one()
         # Los inputs de horas guardan cantidad de horas en amount.
         return self._cr_input_amount(code) * self._cr_hour_value() * multiplier
+
+
+    def _cr_holiday_work_amount(self):
+        self.ensure_one()
+        hours = self._cr_input_amount("CR_OT_20")
+        multiplier = 1.0 if self.contract_id.cr_pay_frequency in ("monthly", "biweekly") else 2.0
+        return self._cr_round(hours * self._cr_hour_value() * multiplier)
 
     def _cr_unpaid_time_amount(self):
         self.ensure_one()

@@ -7,4 +7,5 @@
     <record id="leave_type_cr_ins" model="hr.leave.type"><field name="name">CR - Incapacidad INS</field><field name="requires_allocation">no</field><field name="request_unit">day</field><field name="work_entry_type_id" ref="work_entry_sick_ins"/></record>
     <record id="leave_type_cr_maternity" model="hr.leave.type"><field name="name">CR - Licencia de maternidad</field><field name="requires_allocation">no</field><field name="request_unit">day</field><field name="work_entry_type_id" ref="work_entry_maternity"/></record>
     <record id="leave_type_cr_paternity" model="hr.leave.type"><field name="name">CR - Licencia de paternidad</field><field name="requires_allocation">no</field><field name="request_unit">day</field><field name="work_entry_type_id" ref="work_entry_paternity"/></record>
+    <record id="leave_type_cr_lactation" model="hr.leave.type"><field name="name">CR - Lactancia</field><field name="requires_allocation">no</field><field name="request_unit">hour</field><field name="work_entry_type_id" ref="work_entry_lactation"/></record>
 </odoo>

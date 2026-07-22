@@ -12,4 +12,5 @@
     <record id="work_entry_sick_ins" model="hr.work.entry.type"><field name="name">CR - Incapacidad INS</field><field name="code">CR_SICK_INS</field><field name="sequence">42</field><field name="is_leave">True</field></record>
     <record id="work_entry_maternity" model="hr.work.entry.type"><field name="name">CR - Licencia de maternidad</field><field name="code">CR_MATERNITY</field><field name="sequence">43</field><field name="is_leave">True</field></record>
     <record id="work_entry_paternity" model="hr.work.entry.type"><field name="name">CR - Licencia de paternidad</field><field name="code">CR_PATERNITY</field><field name="sequence">44</field><field name="is_leave">True</field></record>
+    <record id="work_entry_lactation" model="hr.work.entry.type"><field name="name">CR - Lactancia</field><field name="code">CR_LACTATION</field><field name="sequence">45</field><field name="is_leave">True</field></record>
 </odoo>

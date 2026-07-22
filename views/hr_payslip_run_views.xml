@@ -5,6 +5,13 @@
         <field name="model">hr.payslip.run</field>
         <field name="inherit_id" ref="hr_payroll.hr_payslip_run_form"/>
         <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="action_cr_validate_payroll"
+                        type="object"
+                        string="Validar nómina"
+                        class="btn-secondary"
+                        invisible="state == 'close'"/>
+            </xpath>
             <xpath expr="//field[@name='company_id']" position="after">
                 <field name="cr_process_type" string="Tipo de proceso" readonly="state != 'draft'"/>
                 <field name="cr_is_aguinaldo" invisible="1"/>

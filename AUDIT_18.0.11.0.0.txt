@@ -1,0 +1,10 @@
+Python AST: OK (22 archivos)
+XML: OK (23 archivos)
+CSV de accesos: modelos resueltos
+Referencias antiguas: ninguna
+SEM trabajador 5.50: OK
+IVM trabajador 4.33: OK
+Banco Popular trabajador 0: OK
+IVM patrono 5.58: OK
+Base mínima SEM 346789: OK
+Base mínima IVM 324590: OK
