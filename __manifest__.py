@@ -2,7 +2,7 @@
 {
     "name": "RH Costa Rica - Nómina Odoo 18",
     "summary": "Localización nativa y parametrizable de nómina de Costa Rica para Odoo 18 Enterprise",
-    "version": "18.0.10.0.0",
+    "version": "18.0.10.0.1",
     "category": "Human Resources/Payroll",
     "author": "Castro Li",
     "website": "https://castrolicr.com",
@@ -37,8 +37,8 @@
         "views/hr_contract_views.xml",
         "views/hr_payslip_run_views.xml",
         "views/res_config_settings_views.xml",
-        "wizard/generate_holidays_views.xml",
         "views/menu_views.xml",
+        "wizard/generate_holidays_views.xml",
         "data/native_setup.xml",
     ],
     "installable": True,

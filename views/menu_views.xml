@@ -46,9 +46,4 @@
               parent="menu_cr_configuration_root"
               action="action_cr_deduction"
               sequence="70"/>
-    <menuitem id="menu_cr_generate_holidays"
-              name="Generar feriados"
-              parent="menu_cr_configuration_root"
-              action="action_cr_generate_holidays"
-              sequence="80"/>
 </odoo>

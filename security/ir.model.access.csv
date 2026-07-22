@@ -5,8 +5,6 @@ access_cr_social_contribution_user,cr.social.contribution.user,model_cr_payroll_
 access_cr_social_contribution_manager,cr.social.contribution.manager,model_cr_payroll_social_contribution,hr_payroll.group_hr_payroll_manager,1,1,1,1
 access_cr_tax_bracket_user,cr.tax.bracket.user,model_cr_payroll_tax_bracket,hr_payroll.group_hr_payroll_user,1,0,0,0
 access_cr_tax_bracket_manager,cr.tax.bracket.manager,model_cr_payroll_tax_bracket,hr_payroll.group_hr_payroll_manager,1,1,1,1
-access_cr_public_holiday_user,cr.public.holiday.user,model_cr_payroll_public_holiday,hr_payroll.group_hr_payroll_user,1,0,0,0
-access_cr_public_holiday_manager,cr.public.holiday.manager,model_cr_payroll_public_holiday,hr_payroll.group_hr_payroll_manager,1,1,1,1
 access_cr_deduction_user,cr.deduction.user,model_cr_payroll_deduction,hr_payroll.group_hr_payroll_user,1,1,1,0
 access_cr_deduction_manager,cr.deduction.manager,model_cr_payroll_deduction,hr_payroll.group_hr_payroll_manager,1,1,1,1
 access_cr_generate_holiday_wizard,cr.generate.holiday.wizard,model_cr_generate_holidays_wizard,hr_payroll.group_hr_payroll_manager,1,1,1,1
