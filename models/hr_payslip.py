@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import calendar
 from collections import defaultdict
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError
@@ -291,15 +292,36 @@ class HrPayslip(models.Model):
         return self._cr_round(max(tax_total - prior_tax, 0.0))
 
     def _cr_compute_social_component(self, code, taxable):
+        """Calcula una contribución social acumulada dentro del mes.
+
+        La base mínima de SEM/IVM se aplica proporcionalmente al avance del
+        período mensual. Esto evita cobrar la base mínima mensual completa en
+        la primera quincena y volver a recalcularla en la segunda.
+
+        Ejemplo quincenal:
+        - Primera quincena: se considera hasta el 50 % de la base mínima.
+        - Segunda quincena: se completa hasta el 100 % de la base mínima.
+        - Si el salario gravable acumulado supera la base mínima proporcional,
+          se utiliza el salario gravable real.
+        """
         self.ensure_one()
+
+        if not self.date_to:
+            return 0.0
+
         Contribution = self.env["cr.payroll.social.contribution"]
         record = Contribution.search([
             ("code", "=", code),
             ("active", "=", True),
             ("date_from", "<=", self.date_to),
-            "|", ("date_to", "=", False), ("date_to", ">=", self.date_to),
-            "|", ("company_id", "=", self.company_id.id), ("company_id", "=", False),
+            "|",
+            ("date_to", "=", False),
+            ("date_to", ">=", self.date_to),
+            "|",
+            ("company_id", "=", self.company_id.id),
+            ("company_id", "=", False),
         ], order="company_id desc, date_from desc", limit=1)
+
         if not record or not record.rate:
             return 0.0
 
@@ -309,11 +331,18 @@ class HrPayslip(models.Model):
             ("employee_id", "=", self.employee_id.id),
             ("company_id", "=", self.company_id.id),
             ("date_to", ">=", month_start),
-            ("date_to", "<=", self.date_to),
+            ("date_to", "<", self.date_to),
             ("state", "in", ["done", "paid"]),
         ])
-        prior_taxable = sum(slip._cr_taxable_gross_estimate() for slip in prior_slips)
-        monthly_taxable = max(prior_taxable + max(taxable, 0.0), 0.0)
+
+        prior_taxable = sum(
+            slip._cr_taxable_gross_estimate()
+            for slip in prior_slips
+        )
+        accumulated_taxable = max(
+            prior_taxable + max(taxable or 0.0, 0.0),
+            0.0,
+        )
 
         Param = self.env["cr.payroll.legal.parameter"]
         minimum_code = {
@@ -322,11 +351,37 @@ class HrPayslip(models.Model):
             "IVM_EMP": "IVM_MIN_BASE",
             "IVM_PAT": "IVM_MIN_BASE",
         }.get(code)
-        if minimum_code and monthly_taxable > 0:
-            minimum = Param.value_at(minimum_code, self.date_to, self.company_id)
-            monthly_taxable = max(monthly_taxable, minimum)
 
-        total_due = monthly_taxable * record.rate / 100.0
+        contribution_base = accumulated_taxable
+
+        if minimum_code and accumulated_taxable > 0:
+            monthly_minimum = max(
+                Param.value_at(
+                    minimum_code,
+                    self.date_to,
+                    self.company_id,
+                ) or 0.0,
+                0.0,
+            )
+
+            # Se prorratea la base mínima según el avance real del mes.
+            # Al día 15 de un mes de 30 días aplica el 50 %; al cierre aplica 100 %.
+            days_in_month = calendar.monthrange(
+                self.date_to.year,
+                self.date_to.month,
+            )[1]
+            elapsed_ratio = min(
+                max(self.date_to.day / float(days_in_month), 0.0),
+                1.0,
+            )
+            prorated_minimum = monthly_minimum * elapsed_ratio
+            contribution_base = max(
+                accumulated_taxable,
+                prorated_minimum,
+            )
+
+        total_due = contribution_base * record.rate / 100.0
+
         salary_code = {
             "SEM_EMP": "CR_SEM_EMP",
             "IVM_EMP": "CR_IVM_EMP",
@@ -340,6 +395,7 @@ class HrPayslip(models.Model):
             "FCL_PAT": "CR_FCL_PAT",
             "ROP_PAT": "CR_ROP_PAT",
         }.get(code)
+
         prior_paid = 0.0
         if salary_code:
             prior_paid = abs(sum(
@@ -347,7 +403,9 @@ class HrPayslip(models.Model):
                 .filtered(lambda line: line.code == salary_code)
                 .mapped("total")
             ))
-        return self._cr_round(max(total_due - prior_paid, 0.0))
+
+        current_due = max(total_due - prior_paid, 0.0)
+        return self._cr_round(current_due)
 
     def _cr_compute_social_employee(self, taxable):
         rate = self.env["cr.payroll.social.contribution"].total_rate_at("employee", self.date_to, self.company_id)
