@@ -10,6 +10,81 @@ class HrPayslip(models.Model):
     cr_validation_message = fields.Text(compute="_compute_cr_validation_message")
     cr_incident_ids = fields.One2many("cr.payroll.incident", "payslip_id", string="Incidencias CR")
 
+    cr_basic_total = fields.Monetary(string="Salario básico", compute="_compute_cr_dashboard_amounts", currency_field="currency_id")
+    cr_gross_total = fields.Monetary(string="Salario bruto", compute="_compute_cr_dashboard_amounts", currency_field="currency_id")
+    cr_employee_ccss_total = fields.Monetary(string="CCSS trabajador", compute="_compute_cr_dashboard_amounts", currency_field="currency_id")
+    cr_income_tax_total = fields.Monetary(string="Renta", compute="_compute_cr_dashboard_amounts", currency_field="currency_id")
+    cr_recurring_deduction_total = fields.Monetary(string="Deducciones recurrentes", compute="_compute_cr_dashboard_amounts", currency_field="currency_id")
+    cr_total_deductions = fields.Monetary(string="Deducciones totales", compute="_compute_cr_dashboard_amounts", currency_field="currency_id")
+    cr_net_total = fields.Monetary(string="Salario neto", compute="_compute_cr_dashboard_amounts", currency_field="currency_id")
+    cr_employer_social_total = fields.Monetary(string="Cargas patronales", compute="_compute_cr_dashboard_amounts", currency_field="currency_id")
+    cr_aguinaldo_period_total = fields.Monetary(string="Provisión aguinaldo", compute="_compute_cr_dashboard_amounts", currency_field="currency_id")
+    cr_vacation_provision_total = fields.Monetary(string="Provisión vacaciones", compute="_compute_cr_dashboard_amounts", currency_field="currency_id")
+    cr_employer_cost_total = fields.Monetary(string="Costo patronal", compute="_compute_cr_dashboard_amounts", currency_field="currency_id")
+    cr_aguinaldo_accumulated = fields.Monetary(string="Aguinaldo acumulado", compute="_compute_cr_dashboard_amounts", currency_field="currency_id")
+
+    @api.depends("line_ids.total", "line_ids.code", "line_ids.category_id.code", "date_to", "employee_id")
+    def _compute_cr_dashboard_amounts(self):
+        for slip in self:
+            lines = slip.line_ids
+
+            def amount_by_codes(*codes):
+                code_set = set(codes)
+                return sum(lines.filtered(lambda line: line.code in code_set).mapped("total"))
+
+            def amount_by_categories(*codes):
+                category_set = set(codes)
+                return sum(lines.filtered(lambda line: line.category_id.code in category_set).mapped("total"))
+
+            basic = amount_by_codes("BASIC", "CR_BASIC", "CR_BASIC_BIWEEKLY", "CR_BASIC_WEEKLY", "CR_BASIC_HOURLY")
+            if not basic:
+                basic = amount_by_categories("BASIC")
+
+            gross = amount_by_codes("GROSS", "CR_GROSS")
+            if not gross:
+                gross = amount_by_categories("GROSS")
+
+            employee_ccss = abs(amount_by_codes("CR_SEM_EMP", "CR_IVM_EMP", "CR_BP_EMP"))
+            income_tax = abs(amount_by_codes("CR_RENTA"))
+            recurring = abs(amount_by_codes("CR_RECUR_DED"))
+
+            category_deductions = abs(amount_by_categories("EMPLOYEE_SOC", "TAX", "LEGAL_DED", "VOL_DED"))
+            total_deductions = category_deductions or abs(sum(
+                line.total for line in lines
+                if line.total < 0 and line.category_id.code not in {"NET", "EMPLOYER_SOC", "PROVISION"}
+            ))
+
+            net = amount_by_codes("NET", "CR_NET")
+            if not net:
+                net = amount_by_categories("NET")
+
+            employer_social = amount_by_categories("EMPLOYER_SOC")
+            aguinaldo_provision = amount_by_codes("CR_AGUINALDO_PROV", "CR_PROV_AGUINALDO", "CR_AGUINALDO_PROVISION")
+            vacation_provision = amount_by_codes("CR_VACATION_PROV", "CR_PROV_VACATION", "CR_VACATION_PROVISION")
+
+            if not aguinaldo_provision or not vacation_provision:
+                provision_lines = lines.filtered(lambda line: line.category_id.code == "PROVISION")
+                for line in provision_lines:
+                    code_name = (line.code or "").upper()
+                    line_name = (line.name or "").upper()
+                    if not aguinaldo_provision and ("AGUINALDO" in code_name or "AGUINALDO" in line_name):
+                        aguinaldo_provision += line.total
+                    elif not vacation_provision and ("VAC" in code_name or "VACACION" in line_name):
+                        vacation_provision += line.total
+
+            slip.cr_basic_total = basic
+            slip.cr_gross_total = gross
+            slip.cr_employee_ccss_total = employee_ccss
+            slip.cr_income_tax_total = income_tax
+            slip.cr_recurring_deduction_total = recurring
+            slip.cr_total_deductions = total_deductions
+            slip.cr_net_total = net
+            slip.cr_employer_social_total = employer_social
+            slip.cr_aguinaldo_period_total = aguinaldo_provision
+            slip.cr_vacation_provision_total = vacation_provision
+            slip.cr_employer_cost_total = gross + employer_social + aguinaldo_provision + vacation_provision
+            slip.cr_aguinaldo_accumulated = slip._cr_compute_aguinaldo() if slip.employee_id and slip.date_to else 0.0
+
     def _compute_cr_validation_message(self):
         WorkEntry = self.env["hr.work.entry"].sudo()
         for slip in self:
