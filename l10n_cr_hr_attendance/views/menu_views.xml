@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_cr_attendance_root"
+              name="Asistencia y jornadas"
+              parent="l10n_cr_hr.menu_cr_configuration_root"
+              sequence="16"
+              groups="hr_payroll.group_hr_payroll_manager"/>
+    <menuitem id="menu_cr_hour_recovery"
+              name="Reposiciones de horas"
+              parent="menu_cr_attendance_root"
+              action="action_cr_hour_recovery"
+              sequence="10"/>
+    <menuitem id="menu_cr_shift_analysis"
+              name="Jornadas avanzadas"
+              parent="menu_cr_attendance_root"
+              action="action_cr_shift_analysis"
+              sequence="20"/>
+</odoo>

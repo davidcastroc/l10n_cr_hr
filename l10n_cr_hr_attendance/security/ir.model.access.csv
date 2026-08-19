@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_cr_hour_recovery_manager,Reposiciones de horas - responsables,model_cr_payroll_hour_recovery,hr_payroll.group_hr_payroll_manager,1,1,1,1
+access_cr_hour_recovery_line_manager,Horarios de reposición - responsables,model_cr_payroll_hour_recovery_line,hr_payroll.group_hr_payroll_manager,1,1,1,1
+access_cr_shift_analysis_manager,Análisis de jornadas - responsables,model_cr_payroll_shift_analysis,hr_payroll.group_hr_payroll_manager,1,1,1,1
+access_cr_shift_analysis_line_manager,Segmentos de jornada - responsables,model_cr_payroll_shift_analysis_line,hr_payroll.group_hr_payroll_manager,1,1,1,1

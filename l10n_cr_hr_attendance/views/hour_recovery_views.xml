@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_cr_hour_recovery_list" model="ir.ui.view">
+        <field name="name">cr.payroll.hour.recovery.list</field><field name="model">cr.payroll.hour.recovery</field>
+        <field name="arch" type="xml"><list decoration-danger="state == 'expired'" decoration-success="state == 'done'">
+            <field name="origin_date"/><field name="employee_id"/><field name="origin_type"/><field name="hours_to_recover"/><field name="recovered_hours"/><field name="remaining_hours"/><field name="deadline_date"/><field name="state"/>
+        </list></field>
+    </record>
+    <record id="view_cr_hour_recovery_form" model="ir.ui.view">
+        <field name="name">cr.payroll.hour.recovery.form</field><field name="model">cr.payroll.hour.recovery</field>
+        <field name="arch" type="xml"><form string="Reposición de horas">
+            <header>
+                <button name="action_submit" type="object" string="Enviar a aprobación" class="btn-primary" invisible="state != 'draft'"/>
+                <button name="action_approve" type="object" string="Aprobar reposición" class="btn-primary" invisible="state != 'to_approve'"/>
+                <button name="action_reconcile" type="object" string="Verificar marcaciones" invisible="state not in ('approved','partial','expired')"/>
+                <button name="action_reschedule" type="object" string="Reprogramar" invisible="state not in ('approved','partial')"/>
+                <button name="action_cancel" type="object" string="Cancelar" invisible="state in ('done','cancel')"/>
+                <field name="state" widget="statusbar" statusbar_visible="draft,to_approve,approved,partial,done,expired,cancel"/>
+            </header><sheet>
+                <group><group string="Origen del tiempo pendiente"><field name="name"/><field name="employee_id"/><field name="contract_id"/><field name="origin_date"/><field name="origin_type"/><field name="hours_to_recover"/></group>
+                <group string="Plazo autorizado"><field name="valid_from"/><field name="deadline_date"/><field name="planned_hours" readonly="1"/><field name="recovered_hours" readonly="1"/><field name="remaining_hours" readonly="1"/><field name="excess_hours" readonly="1"/></group></group>
+                <group string="Justificación y respaldo"><field name="reason" placeholder="Ejemplo: regresó una hora tarde del almuerzo y se autoriza reponerla dentro del plazo indicado."/><field name="attachment_ids" widget="many2many_binary"/></group>
+                <notebook><page string="Días y horarios para reponer"><field name="plan_line_ids" nolabel="1" readonly="state not in ('draft','to_approve')"><list editable="bottom"><field name="date_start"/><field name="date_stop"/><field name="planned_hours" readonly="1"/><field name="actual_hours" readonly="1"/><field name="notes"/></list><form string="Horario de reposición"><group><field name="date_start"/><field name="date_stop"/><field name="planned_hours" readonly="1"/><field name="actual_hours" readonly="1"/><field name="attendance_ids" widget="many2many_tags" readonly="1"/><field name="notes"/></group></form></field></page>
+                <page string="Auditoría y nómina"><group><field name="requested_by_id" readonly="1"/><field name="approved_by_id" readonly="1"/><field name="approved_at" readonly="1"/><field name="closed_at" readonly="1"/><field name="payroll_incident_id" readonly="1"/></group><field name="notes"/></page></notebook>
+            </sheet><chatter/></form></field>
+    </record>
+    <record id="view_cr_hour_recovery_search" model="ir.ui.view"><field name="name">cr.payroll.hour.recovery.search</field><field name="model">cr.payroll.hour.recovery</field><field name="arch" type="xml"><search string="Buscar reposiciones"><field name="employee_id"/><field name="origin_date"/><field name="deadline_date"/><filter name="pending" string="Pendientes" domain="[('state','in',['to_approve','approved','partial','expired'])]"/><filter name="expired" string="Vencidas" domain="[('state','=','expired')]"/><filter name="done" string="Repuestas" domain="[('state','=','done')]"/><group expand="0" string="Agrupar por"><filter string="Empleado" name="group_employee" context="{'group_by':'employee_id'}"/><filter string="Estado" name="group_state" context="{'group_by':'state'}"/></group></search></field></record>
+    <record id="action_cr_hour_recovery" model="ir.actions.act_window"><field name="name">Reposiciones de horas</field><field name="res_model">cr.payroll.hour.recovery</field><field name="view_mode">list,form</field><field name="search_view_id" ref="view_cr_hour_recovery_search"/><field name="context">{'search_default_pending': 1}</field></record>
+</odoo>

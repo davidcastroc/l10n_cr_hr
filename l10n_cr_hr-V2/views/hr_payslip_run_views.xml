@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ============================================================= -->
+    <!-- LOTE DE NÓMINA: VALIDACIONES, REPORTES Y DASHBOARD RESUMIDO   -->
+    <!-- ============================================================= -->
+    <record id="view_hr_payslip_run_form_cr" model="ir.ui.view">
+        <field name="name">hr.payslip.run.form.cr</field>
+        <field name="model">hr.payslip.run</field>
+        <field name="inherit_id" ref="hr_payroll.hr_payslip_run_form"/>
+        <field name="arch" type="xml">
+
+            <!-- Botones del lote -->
+            <xpath expr="//header" position="inside">
+                <button
+                    name="action_cr_validate_payroll"
+                    type="object"
+                    string="Validar nómina"
+                    class="btn-secondary"
+                    invisible="state == 'close'"
+                />
+                <button
+                    name="action_cr_download_summary"
+                    type="object"
+                    string="Resumen"
+                    class="btn-secondary"
+                />
+                <button
+                    name="action_cr_download_ccss"
+                    type="object"
+                    string="CCSS"
+                    class="btn-secondary"
+                />
+                <button
+                    name="action_cr_download_ins"
+                    type="object"
+                    string="INS"
+                    class="btn-secondary"
+                />
+            </xpath>
+
+            <!-- Datos propios de Costa Rica -->
+            <xpath expr="//field[@name='company_id']" position="after">
+                <field
+                    name="cr_process_type"
+                    string="Tipo de proceso"
+                    readonly="state != 'draft'"
+                />
+                <field name="cr_is_aguinaldo" invisible="1"/>
+            </xpath>
+
+            <!-- Dashboard visual y resumido -->
+            <xpath expr="//sheet" position="inside">
+                <div class="mt-4 mb-3">
+                    <h3 class="mb-3">Resumen de la nómina</h3>
+
+                    <div class="row g-3">
+
+                        <!-- Colaboradores -->
+                        <div class="col-12 col-md-4">
+                            <div
+                                class="card shadow-sm border-0 h-100"
+                                style="border-radius: 14px;"
+                            >
+                                <div class="card-body py-4 px-4">
+                                    <div class="text-muted small mb-2">
+                                        Colaboradores
+                                    </div>
+                                    <div
+                                        class="fw-bold lh-1"
+                                        style="font-size: 2rem;"
+                                    >
+                                        <field
+                                            name="cr_employee_count"
+                                            readonly="1"
+                                            nolabel="1"
+                                            class="oe_inline"
+                                        />
+                                    </div>
+                                    <div class="text-muted small mt-2">
+                                        Incluidos en este lote
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Total neto -->
+                        <div class="col-12 col-md-4">
+                            <div
+                                class="card shadow-sm border-0 h-100"
+                                style="border-radius: 14px;"
+                            >
+                                <div class="card-body py-4 px-4">
+                                    <div class="text-muted small mb-2">
+                                        Total neto por pagar
+                                    </div>
+                                    <div
+                                        class="fw-bold lh-1"
+                                        style="font-size: 2rem;"
+                                    >
+                                        <field
+                                            name="cr_net_total"
+                                            readonly="1"
+                                            nolabel="1"
+                                            class="oe_inline"
+                                        />
+                                    </div>
+                                    <div class="text-muted small mt-2">
+                                        Pago total a colaboradores
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Deducciones -->
+                        <div class="col-12 col-md-4">
+                            <div
+                                class="card shadow-sm border-0 h-100"
+                                style="border-radius: 14px;"
+                            >
+                                <div class="card-body py-4 px-4">
+                                    <div class="text-muted small mb-2">
+                                        Deducciones totales
+                                    </div>
+                                    <div
+                                        class="fw-bold lh-1"
+                                        style="font-size: 2rem;"
+                                    >
+                                        <field
+                                            name="cr_total_deductions"
+                                            readonly="1"
+                                            nolabel="1"
+                                            class="oe_inline"
+                                        />
+                                    </div>
+                                    <div class="text-muted small mt-2">
+                                        Rebajos aplicados en el lote
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </xpath>
+
+        </field>
+    </record>
+
+    <!-- ============================================================= -->
+    <!-- LISTA DE RECIBOS: COLUMNAS ADICIONALES PARA ANÁLISIS          -->
+    <!-- ============================================================= -->
+    <record id="view_hr_payslip_tree_cr_dashboard" model="ir.ui.view">
+        <field name="name">hr.payslip.list.cr.dashboard</field>
+        <field name="model">hr.payslip</field>
+        <field name="inherit_id" ref="hr_payroll.view_hr_payslip_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='state']" position="before">
+                <field
+                    name="cr_employee_ccss_total"
+                    optional="show"
+                    sum="Total CCSS trabajador"
+                />
+                <field
+                    name="cr_income_tax_total"
+                    optional="hide"
+                    sum="Total renta"
+                />
+                <field
+                    name="cr_recurring_deduction_total"
+                    optional="show"
+                    sum="Total deducciones recurrentes"
+                />
+                <field
+                    name="cr_total_deductions"
+                    optional="show"
+                    sum="Total deducciones"
+                />
+                <field
+                    name="cr_aguinaldo_period_total"
+                    optional="show"
+                    sum="Provisión aguinaldo"
+                />
+                <field
+                    name="cr_aguinaldo_accumulated"
+                    optional="show"
+                    sum="Aguinaldo acumulado"
+                />
+                <field
+                    name="cr_employer_social_total"
+                    optional="hide"
+                    sum="Cargas patronales"
+                />
+                <field
+                    name="cr_employer_cost_total"
+                    optional="hide"
+                    sum="Costo patronal"
+                />
+            </xpath>
+        </field>
+    </record>
+
+</odoo>
