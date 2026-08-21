@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_cr_attendance_correction_list" model="ir.ui.view">
+        <field name="name">cr.attendance.correction.list</field>
+        <field name="model">cr.attendance.correction</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="request_date"/>
+                <field name="employee_id"/>
+                <field name="original_check_in"/>
+                <field name="original_check_out"/>
+                <field name="proposed_check_in"/>
+                <field name="proposed_check_out"/>
+                <field name="requested_by_id"/>
+                <field name="approved_by_id"/>
+                <field name="state"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_cr_attendance_correction_form" model="ir.ui.view">
+        <field name="name">cr.attendance.correction.form</field>
+        <field name="model">cr.attendance.correction</field>
+        <field name="arch" type="xml">
+            <form string="Corrección de marcación">
+                <header>
+                    <button name="action_submit" type="object" string="Enviar a aprobación"
+                            class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_approve" type="object" string="Aprobar y corregir"
+                            class="btn-primary" invisible="state != 'to_approve'"/>
+                    <button name="action_reject" type="object" string="Rechazar"
+                            invisible="state != 'to_approve'"/>
+                    <button name="action_cancel" type="object" string="Cancelar"
+                            invisible="state not in ('draft','to_approve','rejected')"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="attendance_id"/>
+                            <field name="employee_id" readonly="1"/>
+                            <field name="request_date" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="requested_by_id" readonly="1"/>
+                            <field name="approved_by_id" readonly="1"/>
+                            <field name="approved_at" readonly="1"/><field name="administrative_self_approval" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <group string="Marcación original">
+                        <field name="original_check_in" readonly="1"/>
+                        <field name="original_check_out" readonly="1"/>
+                    </group>
+
+                    <group string="Corrección propuesta">
+                        <field name="proposed_check_in"/>
+                        <field name="proposed_check_out"/>
+                    </group>
+
+                    <field name="reason"/>
+                    <field name="attachment_ids" widget="many2many_binary"/>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_cr_attendance_correction" model="ir.actions.act_window">
+        <field name="name">Correcciones de marcación</field>
+        <field name="res_model">cr.attendance.correction</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>

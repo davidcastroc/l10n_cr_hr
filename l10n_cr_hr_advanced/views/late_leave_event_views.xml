@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_cr_late_leave_event_list" model="ir.ui.view">
+        <field name="name">cr.payroll.late.leave.event.list</field>
+        <field name="model">cr.payroll.late.leave.event</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="received_date"/>
+                <field name="employee_id"/>
+                <field name="document_number"/>
+                <field name="date_from"/>
+                <field name="date_to"/>
+                <field name="employer_amount"/>
+                <field name="state"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_cr_late_leave_event_form" model="ir.ui.view">
+        <field name="name">cr.payroll.late.leave.event.form</field>
+        <field name="model">cr.payroll.late.leave.event</field>
+        <field name="arch" type="xml">
+            <form string="Evento tardío de ausencia o incapacidad">
+                <header>
+                    <button name="action_review" type="object" string="Revisar"
+                            class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_apply" type="object" string="Aplicar"
+                            class="btn-primary" invisible="state != 'reviewed'"/>
+                    <button name="action_cancel" type="object" string="Cancelar"
+                            invisible="state not in ('draft','reviewed')"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="employee_id"/>
+                            <field name="contract_id"/>
+                            <field name="rule_code"/><field name="leave_type_id"/>
+                            <field name="document_number"/>
+                            <field name="attachment_ids" widget="many2many_binary"/>
+                        </group>
+                        <group>
+                            <field name="date_from"/>
+                            <field name="date_to"/>
+                            <field name="received_date"/>
+                            <field name="total_days" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <group string="Cálculo">
+                        <group>
+                            <field name="daily_salary"/>
+                            
+                            
+                            <field name="employer_amount" readonly="1"/><field name="external_subsidy_amount" readonly="1"/>
+                        </group>
+                        <group>
+                            
+                            <field name="external_subsidy_amount" readonly="1"/>
+                        </group>
+                    <field name="legal_rule_summary" readonly="1"/>
+                    </group>
+
+                    <notebook>
+                        <page string="Conflictos y períodos afectados">
+                            <field name="overlapping_leave_ids" readonly="1"/>
+                            <field name="closed_payslip_ids" readonly="1"/>
+                        </page>
+                        <page string="Resultado">
+                            <group>
+                                <field name="generated_leave_id" readonly="1"/>
+                                <field name="incident_ids" readonly="1"/>
+                            </group>
+                        </page>
+                        <page string="Auditoría">
+                            <group>
+                                <field name="operator_id" readonly="1"/>
+                                <field name="approved_by_id" readonly="1"/>
+                                <field name="applied_at" readonly="1"/><field name="administrative_self_approval" readonly="1"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_cr_late_leave_event" model="ir.actions.act_window">
+        <field name="name">Eventos tardíos</field>
+        <field name="res_model">cr.payroll.late.leave.event</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>

@@ -1,4 +1,7 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_cr_retroactive_manager,Ajustes retroactivos - responsables,model_cr_payroll_retroactive_adjustment,hr_payroll.group_hr_payroll_manager,1,1,1,1
 access_cr_retroactive_line_manager,Líneas retroactivas - responsables,model_cr_payroll_retroactive_adjustment_line,hr_payroll.group_hr_payroll_manager,1,1,1,1
+access_cr_retroactive_policy_manager,Políticas retroactivas - responsables,model_cr_payroll_retroactive_rule_policy,hr_payroll.group_hr_payroll_manager,1,1,1,1
+access_cr_late_leave_event_manager,Eventos tardíos - responsables,model_cr_payroll_late_leave_event,hr_payroll.group_hr_payroll_manager,1,1,1,1
+access_cr_attendance_correction_manager,Correcciones de marcación - responsables,model_cr_attendance_correction,hr_payroll.group_hr_payroll_manager,1,1,1,1
 access_cr_termination_agreement_line_manager,Acuerdos de liquidación - responsables,model_cr_payroll_termination_agreement_line,hr_payroll.group_hr_payroll_manager,1,1,1,1

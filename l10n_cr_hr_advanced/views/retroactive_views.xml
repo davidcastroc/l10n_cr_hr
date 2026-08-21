@@ -12,21 +12,30 @@
                 <field name="old_wage"/>
                 <field name="new_wage"/>
                 <field name="amount_total"/>
+                <field name="operator_id"/>
+                <field name="approved_by_id"/>
+                <field name="external_report_state"/>
                 <field name="state"/>
             </list>
         </field>
     </record>
+
     <record id="view_cr_retroactive_form" model="ir.ui.view">
         <field name="name">cr.payroll.retroactive.adjustment.form</field>
         <field name="model">cr.payroll.retroactive.adjustment</field>
         <field name="arch" type="xml">
             <form string="Ajuste retroactivo">
                 <header>
-                    <button name="action_calculate" type="object" string="Calcular diferencias" class="btn-primary" invisible="state not in ('draft','calculated')"/>
-                    <button name="action_approve" type="object" string="Aprobar" class="btn-primary" invisible="state != 'calculated'"/>
-                    <button name="action_generate_complementary" type="object" string="Generar complementaria" class="btn-primary" invisible="state != 'approved'"/>
+                    <button name="action_calculate" type="object" string="Calcular diferencias"
+                            class="btn-primary" invisible="state not in ('draft','calculated')"/>
+                    <button name="action_approve" type="object" string="Aprobar"
+                            class="btn-primary" invisible="state != 'calculated'"/>
+                    <button name="action_generate_complementary" type="object"
+                            string="Generar complementaria" class="btn-primary"
+                            invisible="state != 'approved'"/>
                     <field name="state" widget="statusbar"/>
                 </header>
+
                 <sheet>
                     <group>
                         <group>
@@ -34,6 +43,7 @@
                             <field name="employee_id"/>
                             <field name="contract_id"/>
                             <field name="currency_id" invisible="1"/>
+                            <field name="operator_id" readonly="1"/>
                         </group>
                         <group>
                             <field name="origin_date_from"/>
@@ -41,13 +51,16 @@
                             <field name="target_date"/>
                         </group>
                     </group>
+
                     <group string="Cambio salarial">
                         <field name="old_wage"/>
                         <field name="new_wage"/>
                         <field name="amount_total" readonly="1"/>
                     </group>
+
                     <field name="reason" placeholder="Motivo y respaldo del cambio retroactivo..."/>
                     <field name="attachment_ids" widget="many2many_binary"/>
+
                     <notebook>
                         <page string="Diferencias por concepto">
                             <field name="line_ids" nolabel="1">
@@ -55,7 +68,7 @@
                                     <field name="include"/>
                                     <field name="origin_period" readonly="1"/>
                                     <field name="payslip_id" readonly="1"/>
-                                    <field name="salary_rule_code" readonly="1"/>
+                                    <field name="salary_rule_id" readonly="1"/><field name="salary_rule_code" readonly="1"/><field name="policy" readonly="1"/>
                                     <field name="concept_name" readonly="1"/>
                                     <field name="original_amount" readonly="1"/>
                                     <field name="recalculated_amount"/>
@@ -64,10 +77,29 @@
                                 </list>
                             </field>
                         </page>
+
+                        <page string="Reporte externo">
+                            <group>
+                                <field name="external_report_required"/>
+                                <field name="external_report_state" readonly="1"/>
+                                <field name="external_report_notes"/>
+                                <field name="external_reported_by_id" readonly="1"/>
+                                <field name="external_reported_at" readonly="1"/>
+                            </group>
+                            <button name="action_mark_external_reported" type="object"
+                                    string="Marcar como reportado" class="btn-secondary"
+                                    invisible="external_report_state == 'reported'"/>
+                            <button name="action_mark_external_not_required" type="object"
+                                    string="Marcar como no requerido" class="btn-secondary"
+                                    invisible="external_report_state == 'not_required'"/>
+                        </page>
+
                         <page string="Auditoría">
                             <group>
+                                <field name="operator_id" readonly="1"/>
                                 <field name="approved_by_id" readonly="1"/>
-                                <field name="approved_at" readonly="1"/>
+                                <field name="approved_at" readonly="1"/><field name="administrative_self_approval" readonly="1"/>
+                                <field name="incident_ids" readonly="1"/>
                             </group>
                         </page>
                     </notebook>
@@ -76,6 +108,7 @@
             </form>
         </field>
     </record>
+
     <record id="action_cr_retroactive" model="ir.actions.act_window">
         <field name="name">Retroactivos / Complementarias</field>
         <field name="res_model">cr.payroll.retroactive.adjustment</field>

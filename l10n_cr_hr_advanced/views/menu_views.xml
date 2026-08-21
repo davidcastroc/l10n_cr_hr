@@ -5,9 +5,28 @@
               parent="l10n_cr_hr.menu_cr_configuration_root"
               sequence="15"
               groups="hr_payroll.group_hr_payroll_manager"/>
+
     <menuitem id="menu_cr_retroactive"
               name="Retroactivos y complementarias"
               parent="menu_cr_advanced_root"
               action="action_cr_retroactive"
               sequence="10"/>
+
+    <menuitem id="menu_cr_retroactive_policy"
+              name="Políticas de recálculo retroactivo"
+              parent="menu_cr_advanced_root"
+              action="action_cr_retroactive_policy"
+              sequence="15"/>
+
+    <menuitem id="menu_cr_late_leave_event"
+              name="Eventos tardíos"
+              parent="menu_cr_advanced_root"
+              action="action_cr_late_leave_event"
+              sequence="20"/>
+
+    <menuitem id="menu_cr_attendance_correction"
+              name="Correcciones de marcación"
+              parent="menu_cr_advanced_root"
+              action="action_cr_attendance_correction"
+              sequence="30"/>
 </odoo>
