@@ -12,5 +12,6 @@ from . import payroll_incident
 from . import disability_rule
 from . import severance
 from . import native_setup
+from . import hr_payslip_employees
 
 from . import resource_calendar_leaves
