@@ -4,6 +4,54 @@ from odoo import api, fields, models, _
 from odoo.exceptions import ValidationError
 
 
+class HrPayrollStructure(models.Model):
+    _inherit = "hr.payroll.structure"
+
+    cr_structure_usage = fields.Selection(
+        selection=[
+            ("weekly", "Nómina semanal"),
+            ("biweekly", "Nómina quincenal"),
+            ("monthly", "Nómina mensual"),
+            ("hourly", "Nómina por horas"),
+            ("daily", "Nómina diaria"),
+            ("extraordinary", "Pago extraordinario"),
+            ("aguinaldo", "Aguinaldo"),
+            ("termination", "Liquidación laboral"),
+            ("other", "Otro"),
+        ],
+        string="Uso de estructura CR",
+        help=(
+            "Define para qué proceso de Nómina Costa Rica se utiliza "
+            "esta estructura salarial."
+        ),
+    )
+
+    cr_is_regular_payroll = fields.Boolean(
+        string="Estructura ordinaria CR",
+        compute="_compute_cr_is_regular_payroll",
+        store=True,
+        help=(
+            "Indica si esta estructura puede asignarse como estructura "
+            "ordinaria de un contrato."
+        ),
+    )
+
+    @api.depends("cr_structure_usage")
+    def _compute_cr_is_regular_payroll(self):
+        regular_usages = {
+            "weekly",
+            "biweekly",
+            "monthly",
+            "hourly",
+            "daily",
+        }
+
+        for structure in self:
+            structure.cr_is_regular_payroll = (
+                structure.cr_structure_usage in regular_usages
+            )
+
+
 class HrContract(models.Model):
     _inherit = "hr.contract"
 
@@ -19,6 +67,22 @@ class HrContract(models.Model):
         default="monthly",
         required=True,
         help="Periodicidad con la que se generan y pagan los recibos de nómina.",
+    )
+
+    cr_payroll_structure_id = fields.Many2one(
+        comodel_name="hr.payroll.structure",
+        string="Estructura salarial CR",
+        domain=(
+            "["
+            "('type_id', '=', structure_type_id), "
+            "('cr_is_regular_payroll', '=', True), "
+            "('cr_structure_usage', '=', cr_pay_frequency)"
+            "]"
+        ),
+        help=(
+            "Estructura salarial ordinaria utilizada para procesar "
+            "la nómina de este contrato."
+        ),
     )
 
     cr_salary_mode = fields.Selection(
@@ -74,6 +138,76 @@ class HrContract(models.Model):
             "no tenga saldo acumulado suficiente."
         ),
     )
+
+    @api.onchange("cr_pay_frequency", "structure_type_id")
+    def _onchange_cr_payroll_structure(self):
+        for contract in self:
+            contract.cr_payroll_structure_id = False
+
+            if not contract.cr_pay_frequency:
+                continue
+
+            domain = [
+                ("cr_structure_usage", "=", contract.cr_pay_frequency),
+                ("cr_is_regular_payroll", "=", True),
+            ]
+
+            if contract.structure_type_id:
+                domain.append(
+                    ("type_id", "=", contract.structure_type_id.id)
+                )
+
+            structure = self.env["hr.payroll.structure"].search(
+                domain,
+                limit=1,
+            )
+
+            if structure:
+                contract.cr_payroll_structure_id = structure
+
+    @api.constrains(
+        "cr_pay_frequency",
+        "cr_payroll_structure_id",
+        "structure_type_id",
+    )
+    def _check_cr_payroll_structure(self):
+        for contract in self:
+            structure = contract.cr_payroll_structure_id
+
+            if not structure:
+                continue
+
+            if not structure.cr_is_regular_payroll:
+                raise ValidationError(
+                    _(
+                        "La estructura salarial '%s' no puede utilizarse "
+                        "como estructura ordinaria de un contrato."
+                    )
+                    % structure.display_name
+                )
+
+            if (
+                structure.cr_structure_usage
+                != contract.cr_pay_frequency
+            ):
+                raise ValidationError(
+                    _(
+                        "La frecuencia de pago del contrato no coincide "
+                        "con la estructura salarial seleccionada."
+                    )
+                )
+
+            if (
+                contract.structure_type_id
+                and structure.type_id
+                != contract.structure_type_id
+            ):
+                raise ValidationError(
+                    _(
+                        "La estructura salarial seleccionada no pertenece "
+                        "al tipo de estructura salarial del contrato."
+                    )
+                )
 
     @api.constrains("cr_hours_per_day")
     def _check_cr_hours_per_day(self):

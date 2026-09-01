@@ -25,6 +25,11 @@
 
                             <field name="cr_pay_frequency"/>
 
+                            <field
+                                name="cr_payroll_structure_id"
+                                options="{'no_create': True}"
+                            />
+
                             <field name="wage" readonly="1"/>
 
                         </group>
