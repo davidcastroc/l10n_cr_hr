@@ -41,6 +41,60 @@ class HrPayslipRun(models.Model):
     cr_vacation_provision_total = fields.Monetary(string="Provisión vacaciones", compute="_compute_cr_dashboard", currency_field="currency_id")
     cr_employer_cost_total = fields.Monetary(string="Costo patronal total", compute="_compute_cr_dashboard", currency_field="currency_id")
 
+    def _cr_required_structure(self):
+        self.ensure_one()
+        xmlid_by_process = {
+            "aguinaldo": "l10n_cr_hr.structure_aguinaldo",
+            "extraordinary": "l10n_cr_hr.structure_extraordinary",
+            "settlement": "l10n_cr_hr.structure_settlement",
+        }
+        xmlid = xmlid_by_process.get(self.cr_process_type)
+        return self.env.ref(xmlid, raise_if_not_found=False) if xmlid else self.env["hr.payroll.structure"]
+
+    def _cr_check_process_structures(self):
+        for run in self:
+            required = run._cr_required_structure()
+            if not required:
+                continue
+
+            wrong = run.slip_ids.filtered(
+                lambda slip: slip.state != "cancel" and slip.struct_id != required
+            )
+            if wrong:
+                raise UserError(
+                    _(
+                        "El lote '%(run)s' es de tipo '%(process)s'. Todos sus recibos "
+                        "deben usar la estructura '%(structure)s'. Recibos incorrectos: %(slips)s"
+                    )
+                    % {
+                        "run": run.display_name,
+                        "process": dict(run._fields["cr_process_type"].selection).get(
+                            run.cr_process_type,
+                            run.cr_process_type,
+                        ),
+                        "structure": required.display_name,
+                        "slips": ", ".join(wrong.mapped("display_name")),
+                    }
+                )
+
+            if run.cr_process_type == "settlement":
+                invalid = run.slip_ids.filtered(
+                    lambda slip:
+                        slip.state != "cancel"
+                        and (
+                            not slip.cr_termination_id
+                            or slip.cr_termination_id.state not in ("approved", "paid")
+                        )
+                )
+                if invalid:
+                    raise UserError(
+                        _(
+                            "Un lote de liquidación solo puede contener recibos "
+                            "vinculados a liquidaciones aprobadas."
+                        )
+                    )
+
+
     @api.depends(
         "cr_process_type",
         "slip_ids.state",
@@ -86,6 +140,7 @@ class HrPayslipRun(models.Model):
 
     def action_cr_validate_payroll(self):
         self.ensure_one()
+        self._cr_check_process_structures()
         issues = []
         for slip in self.slip_ids:
             if slip.cr_validation_message:

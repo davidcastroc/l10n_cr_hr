@@ -70,4 +70,144 @@
         <field name="source">Póliza y resolución del INS</field>
         <field name="notes">Debe activarse con el porcentaje y modalidad indicados por la póliza o resolución del INS. El sistema bloqueará el cierre si existe una incapacidad INS sin regla activa.</field>
     </record>
+
+    <!--
+      PATERNIDAD / ADOPCIÓN / MUERTE MATERNA:
+      Son licencias remuneradas. Se incorporan al motor para trazabilidad y
+      validación, pero no generan rebajo salarial ni subsidio automático.
+
+      SOA:
+      Se rebaja el salario ordinario durante la incapacidad. La prestación
+      económica es externa y depende del reconocimiento del INS/CCSS del caso;
+      no se inventa un porcentaje universal dentro de la nómina.
+
+      LEY 7756:
+      La relación laboral se suspende en cuanto al salario y existe subsidio
+      legal externo calculado con el promedio de salarios reportados a CCSS de
+      los tres meses anteriores y tramos legales. Como esa base proviene de
+      planillas CCSS y no necesariamente coincide con el salario contractual
+      de Odoo, el módulo NO genera un monto de subsidio ficticio.
+    -->
+
+    <record id="disability_paternity" model="cr.payroll.disability.rule">
+        <field name="name">Licencia legal de paternidad remunerada</field>
+        <field name="code">PATERNITY</field>
+        <field name="leave_type_id" ref="leave_type_cr_paternity"/>
+        <field name="day_from">1</field>
+        <field name="deduction_rate">0</field>
+        <field name="employer_rate">0</field>
+        <field name="subsidy_rate">0</field>
+        <field name="subsidy_paid_in_payroll">False</field>
+        <field name="affects_aguinaldo">True</field>
+        <field name="affects_vacation">True</field>
+        <field name="date_from">2026-01-01</field>
+        <field name="active">True</field>
+        <field name="source">Código de Trabajo, artículo 95</field>
+        <field name="notes">Licencia remunerada. La ausencia no rebaja salario; RRHH debe registrar únicamente los días legalmente disfrutados.</field>
+    </record>
+
+    <record id="disability_soa" model="cr.payroll.disability.rule">
+        <field name="name">SOA - incapacidad por accidente de tránsito</field>
+        <field name="code">SOA</field>
+        <field name="leave_type_id" ref="leave_type_cr_soa"/>
+        <field name="day_from">1</field>
+        <field name="deduction_rate">100</field>
+        <field name="employer_rate">0</field>
+        <field name="subsidy_rate">0</field>
+        <field name="subsidy_paid_in_payroll">False</field>
+        <field name="employer_payment_taxable">False</field>
+        <field name="employer_payment_taxable_income">False</field>
+        <field name="affects_aguinaldo">False</field>
+        <field name="affects_vacation">False</field>
+        <field name="date_from">2026-01-01</field>
+        <field name="active">True</field>
+        <field name="source">Seguro Obligatorio Automotor (SOA), Ley 9078 y reconocimiento INS/CCSS aplicable al caso</field>
+        <field name="notes">Rebaja el salario ordinario por los días incapacitados. Las prestaciones económicas se reconocen externamente según el caso; no se automatiza un porcentaje universal no respaldado por la resolución concreta.</field>
+    </record>
+
+    <record id="disability_adoption" model="cr.payroll.disability.rule">
+        <field name="name">Licencia legal remunerada por adopción</field>
+        <field name="code">ADOPTION</field>
+        <field name="leave_type_id" ref="leave_type_cr_adoption"/>
+        <field name="day_from">1</field>
+        <field name="deduction_rate">0</field>
+        <field name="employer_rate">0</field>
+        <field name="subsidy_rate">0</field>
+        <field name="subsidy_paid_in_payroll">False</field>
+        <field name="affects_aguinaldo">True</field>
+        <field name="affects_vacation">True</field>
+        <field name="date_from">2026-01-01</field>
+        <field name="active">True</field>
+        <field name="source">Código de Trabajo, artículo 95 inciso a)</field>
+        <field name="notes">Licencia especial de tres meses remunerada. En adopción conjunta el período se distribuye conforme al acuerdo de las personas adoptantes; Odoo paga normalmente el salario del período registrado.</field>
+    </record>
+
+    <record id="disability_maternal_death" model="cr.payroll.disability.rule">
+        <field name="name">Licencia especial posparto por muerte materna</field>
+        <field name="code">MATERNAL_DEATH</field>
+        <field name="leave_type_id" ref="leave_type_cr_maternal_death"/>
+        <field name="day_from">1</field>
+        <field name="deduction_rate">0</field>
+        <field name="employer_rate">0</field>
+        <field name="subsidy_rate">0</field>
+        <field name="subsidy_paid_in_payroll">False</field>
+        <field name="affects_aguinaldo">True</field>
+        <field name="affects_vacation">True</field>
+        <field name="date_from">2026-01-01</field>
+        <field name="active">True</field>
+        <field name="source">Código de Trabajo, artículo 95 inciso c), reforma Ley 10397</field>
+        <field name="notes">Licencia remunerada hasta completar el tercer mes contado desde el parto, según la fecha real del evento y la persona legalmente responsable del recién nacido.</field>
+    </record>
+
+    <record id="disability_terminal_care" model="cr.payroll.disability.rule">
+        <field name="name">Ley 7756 - cuido de paciente en fase terminal</field>
+        <field name="code">CARE_TERMINAL</field>
+        <field name="leave_type_id" ref="leave_type_cr_terminal_care"/>
+        <field name="day_from">1</field>
+        <field name="deduction_rate">100</field>
+        <field name="employer_rate">0</field>
+        <field name="subsidy_rate">0</field>
+        <field name="subsidy_paid_in_payroll">False</field>
+        <field name="affects_aguinaldo">False</field>
+        <field name="affects_vacation">False</field>
+        <field name="date_from">2026-01-01</field>
+        <field name="active">True</field>
+        <field name="source">Ley 7756, Beneficios para responsables de pacientes en fase terminal y personas menores gravemente enfermas</field>
+        <field name="notes">Suspende el salario ordinario durante la licencia. El subsidio legal es externo y usa el promedio de salarios CCSS de los tres meses anteriores; no se calcula con el salario contractual actual de Odoo.</field>
+    </record>
+
+    <record id="disability_seriously_ill_minor" model="cr.payroll.disability.rule">
+        <field name="name">Ley 7756 - cuido de menor gravemente enfermo</field>
+        <field name="code">CARE_MINOR_SEVERE</field>
+        <field name="leave_type_id" ref="leave_type_cr_seriously_ill_minor"/>
+        <field name="day_from">1</field>
+        <field name="deduction_rate">100</field>
+        <field name="employer_rate">0</field>
+        <field name="subsidy_rate">0</field>
+        <field name="subsidy_paid_in_payroll">False</field>
+        <field name="affects_aguinaldo">False</field>
+        <field name="affects_vacation">False</field>
+        <field name="date_from">2026-01-01</field>
+        <field name="active">True</field>
+        <field name="source">Ley 7756</field>
+        <field name="notes">Suspende el salario ordinario durante la licencia. La CCSS determina el subsidio con información de planillas y la autorización médica correspondiente.</field>
+    </record>
+
+    <record id="disability_extraordinary_care" model="cr.payroll.disability.rule">
+        <field name="name">Ley 7756 - licencia extraordinaria de cuido</field>
+        <field name="code">CARE_EXTRAORDINARY</field>
+        <field name="leave_type_id" ref="leave_type_cr_extraordinary_care"/>
+        <field name="day_from">1</field>
+        <field name="deduction_rate">100</field>
+        <field name="employer_rate">0</field>
+        <field name="subsidy_rate">0</field>
+        <field name="subsidy_paid_in_payroll">False</field>
+        <field name="affects_aguinaldo">False</field>
+        <field name="affects_vacation">False</field>
+        <field name="date_from">2026-01-01</field>
+        <field name="active">True</field>
+        <field name="source">Ley 7756, artículo 13 y normativa CCSS aplicable</field>
+        <field name="notes">Licencia extraordinaria autorizada por CCSS. Suspende salario ordinario; el subsidio externo se determina con la información oficial de CCSS. RRHH debe registrar el período autorizado.</field>
+    </record>
+
 </odoo>

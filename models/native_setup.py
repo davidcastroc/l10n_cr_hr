@@ -258,8 +258,15 @@ class CrPayrollNativeSetup(models.AbstractModel):
                 "NET",
             },
             self._ref("structure_settlement"): {
-                "GROSS",
-                "CR_RECUR_DED",
+                "CR_SETTLEMENT_SALARY",
+                "CR_SETTLEMENT_COMMISSIONS",
+                "CR_SETTLEMENT_OVERTIME",
+                "CR_SETTLEMENT_VACATION",
+                "CR_SETTLEMENT_AGUINALDO",
+                "CR_NOTICE",
+                "CR_SEVERANCE",
+                "CR_SETTLEMENT_OTHER",
+                "CR_SETTLEMENT_DEDUCTIONS",
                 "NET",
             },
         }
@@ -280,12 +287,20 @@ class CrPayrollNativeSetup(models.AbstractModel):
             )
             self._archive_rules(unwanted)
 
+            allowed_rules = rules.filtered(
+                lambda candidate: (
+                    self._is_cr_rule(candidate)
+                    and candidate.code in allowed_codes
+                )
+            )
+
+            if allowed_rules and "active" in allowed_rules._fields:
+                allowed_rules.write({"active": True})
+
             seen_codes = set()
-            for rule in rules.filtered(
-                lambda candidate: candidate.active
-                and self._is_cr_rule(candidate)
-                and candidate.code in allowed_codes
-            ).sorted(key=lambda candidate: (candidate.sequence, candidate.id)):
+            for rule in allowed_rules.sorted(
+                key=lambda candidate: (candidate.sequence, candidate.id)
+            ):
                 if rule.code in seen_codes:
                     self._archive_rules(rule)
                 else:
@@ -310,9 +325,14 @@ class CrPayrollNativeSetup(models.AbstractModel):
 
         settlement_codes = {
             "CR_SETTLEMENT_SALARY",
+            "CR_SETTLEMENT_COMMISSIONS",
+            "CR_SETTLEMENT_OVERTIME",
             "CR_SETTLEMENT_VACATION",
+            "CR_SETTLEMENT_AGUINALDO",
             "CR_NOTICE",
             "CR_SEVERANCE",
+            "CR_SETTLEMENT_OTHER",
+            "CR_SETTLEMENT_DEDUCTIONS",
         }
 
         extraordinary_codes = {

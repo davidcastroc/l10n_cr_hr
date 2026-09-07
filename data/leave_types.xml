@@ -8,4 +8,48 @@
     <record id="leave_type_cr_maternity" model="hr.leave.type"><field name="name">CR - Licencia de maternidad</field><field name="requires_allocation">no</field><field name="request_unit">day</field><field name="work_entry_type_id" ref="work_entry_maternity"/></record>
     <record id="leave_type_cr_paternity" model="hr.leave.type"><field name="name">CR - Licencia de paternidad</field><field name="requires_allocation">no</field><field name="request_unit">day</field><field name="work_entry_type_id" ref="work_entry_paternity"/></record>
     <record id="leave_type_cr_lactation" model="hr.leave.type"><field name="name">CR - Lactancia</field><field name="requires_allocation">no</field><field name="request_unit">hour</field><field name="work_entry_type_id" ref="work_entry_lactation"/></record>
+
+    <!-- Licencias legales adicionales Costa Rica -->
+    <record id="leave_type_cr_soa" model="hr.leave.type">
+        <field name="name">CR - Accidente de tránsito / SOA</field>
+        <field name="requires_allocation">no</field>
+        <field name="request_unit">day</field>
+        <field name="work_entry_type_id" ref="work_entry_sick_soa"/>
+    </record>
+
+    <record id="leave_type_cr_adoption" model="hr.leave.type">
+        <field name="name">CR - Licencia por adopción</field>
+        <field name="requires_allocation">no</field>
+        <field name="request_unit">day</field>
+        <field name="work_entry_type_id" ref="work_entry_adoption"/>
+    </record>
+
+    <record id="leave_type_cr_maternal_death" model="hr.leave.type">
+        <field name="name">CR - Licencia especial posparto por muerte materna</field>
+        <field name="requires_allocation">no</field>
+        <field name="request_unit">day</field>
+        <field name="work_entry_type_id" ref="work_entry_maternal_death"/>
+    </record>
+
+    <record id="leave_type_cr_terminal_care" model="hr.leave.type">
+        <field name="name">CR - Cuido paciente en fase terminal (Ley 7756)</field>
+        <field name="requires_allocation">no</field>
+        <field name="request_unit">day</field>
+        <field name="work_entry_type_id" ref="work_entry_terminal_care"/>
+    </record>
+
+    <record id="leave_type_cr_seriously_ill_minor" model="hr.leave.type">
+        <field name="name">CR - Cuido menor gravemente enfermo (Ley 7756)</field>
+        <field name="requires_allocation">no</field>
+        <field name="request_unit">day</field>
+        <field name="work_entry_type_id" ref="work_entry_seriously_ill_minor"/>
+    </record>
+
+    <record id="leave_type_cr_extraordinary_care" model="hr.leave.type">
+        <field name="name">CR - Licencia extraordinaria de cuido (Ley 7756)</field>
+        <field name="requires_allocation">no</field>
+        <field name="request_unit">day</field>
+        <field name="work_entry_type_id" ref="work_entry_extraordinary_care"/>
+    </record>
+
 </odoo>

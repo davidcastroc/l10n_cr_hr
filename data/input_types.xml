@@ -27,4 +27,26 @@
   <record id="input_severance_vacation" model="hr.payslip.input.type"><field name="name">CR - Vacaciones pendientes liquidación</field><field name="code">CR_SETTLEMENT_VACATION</field></record>
   <record id="input_severance_notice" model="hr.payslip.input.type"><field name="name">CR - Preaviso</field><field name="code">CR_NOTICE</field></record>
   <record id="input_severance_pay" model="hr.payslip.input.type"><field name="name">CR - Cesantía</field><field name="code">CR_SEVERANCE</field></record>
+
+  <record id="input_settlement_commissions" model="hr.payslip.input.type">
+    <field name="name">CR - Comisiones pendientes liquidación</field>
+    <field name="code">CR_SETTLEMENT_COMMISSIONS</field>
+  </record>
+  <record id="input_settlement_overtime" model="hr.payslip.input.type">
+    <field name="name">CR - Horas extra pendientes liquidación</field>
+    <field name="code">CR_SETTLEMENT_OVERTIME</field>
+  </record>
+  <record id="input_settlement_aguinaldo" model="hr.payslip.input.type">
+    <field name="name">CR - Aguinaldo liquidación</field>
+    <field name="code">CR_SETTLEMENT_AGUINALDO</field>
+  </record>
+  <record id="input_settlement_other" model="hr.payslip.input.type">
+    <field name="name">CR - Otros ingresos liquidación</field>
+    <field name="code">CR_SETTLEMENT_OTHER</field>
+  </record>
+  <record id="input_settlement_deductions" model="hr.payslip.input.type">
+    <field name="name">CR - Deducciones liquidación</field>
+    <field name="code">CR_SETTLEMENT_DEDUCTIONS</field>
+  </record>
+
 </odoo>

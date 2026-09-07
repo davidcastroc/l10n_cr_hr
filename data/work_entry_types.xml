@@ -13,4 +13,43 @@
     <record id="work_entry_maternity" model="hr.work.entry.type"><field name="name">CR - Licencia de maternidad</field><field name="code">CR_MATERNITY</field><field name="sequence">43</field><field name="is_leave">True</field></record>
     <record id="work_entry_paternity" model="hr.work.entry.type"><field name="name">CR - Licencia de paternidad</field><field name="code">CR_PATERNITY</field><field name="sequence">44</field><field name="is_leave">True</field></record>
     <record id="work_entry_lactation" model="hr.work.entry.type"><field name="name">CR - Lactancia</field><field name="code">CR_LACTATION</field><field name="sequence">45</field><field name="is_leave">True</field></record>
+
+    <!-- Licencias legales adicionales Costa Rica -->
+    <record id="work_entry_sick_soa" model="hr.work.entry.type">
+        <field name="name">CR - Accidente de tránsito / SOA</field>
+        <field name="code">CR_SICK_SOA</field>
+        <field name="sequence">46</field>
+        <field name="is_leave">True</field>
+    </record>
+    <record id="work_entry_adoption" model="hr.work.entry.type">
+        <field name="name">CR - Licencia por adopción</field>
+        <field name="code">CR_ADOPTION</field>
+        <field name="sequence">47</field>
+        <field name="is_leave">True</field>
+    </record>
+    <record id="work_entry_maternal_death" model="hr.work.entry.type">
+        <field name="name">CR - Licencia especial posparto por muerte materna</field>
+        <field name="code">CR_MATERNAL_DEATH</field>
+        <field name="sequence">48</field>
+        <field name="is_leave">True</field>
+    </record>
+    <record id="work_entry_terminal_care" model="hr.work.entry.type">
+        <field name="name">CR - Cuido paciente en fase terminal</field>
+        <field name="code">CR_CARE_TERMINAL</field>
+        <field name="sequence">49</field>
+        <field name="is_leave">True</field>
+    </record>
+    <record id="work_entry_seriously_ill_minor" model="hr.work.entry.type">
+        <field name="name">CR - Cuido menor gravemente enfermo</field>
+        <field name="code">CR_CARE_MINOR_SEVERE</field>
+        <field name="sequence">50</field>
+        <field name="is_leave">True</field>
+    </record>
+    <record id="work_entry_extraordinary_care" model="hr.work.entry.type">
+        <field name="name">CR - Licencia extraordinaria de cuido Ley 7756</field>
+        <field name="code">CR_CARE_EXTRAORDINARY</field>
+        <field name="sequence">51</field>
+        <field name="is_leave">True</field>
+    </record>
+
 </odoo>

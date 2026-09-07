@@ -1,6 +1,208 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
- <record id="view_cr_termination_list" model="ir.ui.view"><field name="name">cr.payroll.termination.list</field><field name="model">cr.payroll.termination</field><field name="arch" type="xml"><list><field name="termination_date"/><field name="employee_id"/><field name="reason"/><field name="gross_total"/><field name="net_total"/><field name="state"/></list></field></record>
- <record id="view_cr_termination_form" model="ir.ui.view"><field name="name">cr.payroll.termination.form</field><field name="model">cr.payroll.termination</field><field name="arch" type="xml"><form><header><field name="state" widget="statusbar"/></header><sheet><group><group><field name="name"/><field name="employee_id"/><field name="contract_id"/><field name="termination_date"/><field name="reason"/></group><group><field name="include_notice"/><field name="include_severance"/><field name="vacation_days"/><field name="currency_id" invisible="1"/></group></group><group string="Ingresos"><field name="pending_salary"/><field name="pending_commissions"/><field name="pending_overtime"/><field name="vacation_amount"/><field name="aguinaldo_amount"/><field name="notice_amount" invisible="not include_notice"/><field name="severance_amount" invisible="not include_severance"/><field name="other_income"/></group><group string="Resultado"><field name="deductions"/><field name="gross_total" readonly="1"/><field name="net_total" readonly="1"/></group><field name="notes"/></sheet></form></field></record>
- <record id="action_cr_termination" model="ir.actions.act_window"><field name="name">Liquidaciones</field><field name="res_model">cr.payroll.termination</field><field name="view_mode">list,form</field></record>
+
+    <record id="view_cr_termination_list" model="ir.ui.view">
+        <field name="name">cr.payroll.termination.list</field>
+        <field name="model">cr.payroll.termination</field>
+        <field name="arch" type="xml">
+            <list
+                string="Liquidaciones laborales"
+                decoration-info="state == 'review'"
+                decoration-success="state == 'approved'"
+                decoration-muted="state == 'cancel'"
+            >
+                <field name="termination_date"/>
+                <field name="employee_id"/>
+                <field name="contract_id"/>
+                <field name="reason"/>
+                <field name="gross_total" sum="Total bruto"/>
+                <field name="net_total" sum="Total neto"/>
+                <field name="payslip_id" optional="hide"/>
+                <field name="state" widget="badge"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_cr_termination_form" model="ir.ui.view">
+        <field name="name">cr.payroll.termination.form</field>
+        <field name="model">cr.payroll.termination</field>
+        <field name="arch" type="xml">
+            <form string="Liquidación laboral">
+                <header>
+                    <button
+                        name="action_recalculate"
+                        string="Recalcular"
+                        type="object"
+                        class="oe_highlight"
+                        invisible="state not in ('draft', 'review')"
+                    />
+                    <button
+                        name="action_submit_review"
+                        string="Enviar a revisión"
+                        type="object"
+                        class="oe_highlight"
+                        invisible="state != 'draft'"
+                    />
+                    <button
+                        name="action_reset_draft"
+                        string="Devolver a borrador"
+                        type="object"
+                        invisible="state != 'review'"
+                    />
+                    <button
+                        name="action_approve"
+                        string="Aprobar"
+                        type="object"
+                        class="oe_highlight"
+                        invisible="state != 'review'"
+                    />
+                    <button
+                        name="action_generate_payslip"
+                        string="Generar recibo de liquidación"
+                        type="object"
+                        class="oe_highlight"
+                        invisible="state != 'approved' or payslip_id"
+                    />
+                    <button
+                        name="action_open_payslip"
+                        string="Abrir recibo"
+                        type="object"
+                        invisible="not payslip_id"
+                    />
+                    <button
+                        name="action_mark_paid"
+                        string="Marcar como pagada"
+                        type="object"
+                        class="oe_highlight"
+                        invisible="state != 'approved'"
+                    />
+                    <button
+                        name="action_cancel"
+                        string="Cancelar"
+                        type="object"
+                        confirm="¿Está seguro de que desea cancelar esta liquidación?"
+                        invisible="state not in ('draft', 'review')"
+                    />
+                    <field
+                        name="state"
+                        widget="statusbar"
+                        statusbar_visible="draft,review,approved,paid,cancel"
+                    />
+                </header>
+
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button
+                            name="action_open_payslip"
+                            type="object"
+                            class="oe_stat_button"
+                            icon="fa-money"
+                            invisible="not payslip_id"
+                        >
+                            <field name="payslip_id" widget="statinfo" string="Recibo"/>
+                        </button>
+                    </div>
+
+                    <div class="oe_title">
+                        <label for="name" string="Liquidación"/>
+                        <h1>
+                            <field name="name" readonly="state not in ('draft', 'review')"/>
+                        </h1>
+                    </div>
+
+                    <group>
+                        <group string="Información laboral">
+                            <field name="employee_id" readonly="state != 'draft'"/>
+                            <field name="contract_id" readonly="state != 'draft'"/>
+                            <field name="termination_date" readonly="state != 'draft'"/>
+                            <field name="reason" readonly="state != 'draft'"/>
+                        </group>
+                        <group string="Extremos laborales">
+                            <field name="include_notice" readonly="state not in ('draft', 'review')"/>
+                            <field name="include_severance" readonly="state not in ('draft', 'review')"/>
+                            <field name="vacation_days" readonly="state not in ('draft', 'review')"/>
+                            <field name="currency_id" invisible="1"/>
+                            <field name="payslip_run_id" invisible="1"/>
+                        </group>
+                    </group>
+
+                    <group string="Referencia de cálculo">
+                        <group>
+                            <field name="service_years" readonly="1"/>
+                            <field name="service_months" readonly="1"/>
+                            <field name="service_days" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="salary_average" readonly="1"/>
+                            <field name="daily_salary" readonly="1"/>
+                            <field name="notice_days" readonly="1" invisible="not include_notice"/>
+                            <field name="severance_days" readonly="1" invisible="not include_severance"/>
+                        </group>
+                    </group>
+
+                    <group string="Ingresos">
+                        <group>
+                            <field name="pending_salary" readonly="state not in ('draft', 'review')"/>
+                            <field name="pending_commissions" readonly="state not in ('draft', 'review')"/>
+                            <field name="pending_overtime" readonly="state not in ('draft', 'review')"/>
+                            <field name="other_income" readonly="state not in ('draft', 'review')"/>
+                        </group>
+                        <group>
+                            <field name="vacation_amount" readonly="1"/>
+                            <field name="aguinaldo_amount" readonly="1"/>
+                            <field name="notice_amount" readonly="1" invisible="not include_notice"/>
+                            <field name="severance_amount" readonly="1" invisible="not include_severance"/>
+                        </group>
+                    </group>
+
+                    <group string="Resultado">
+                        <group>
+                            <field name="deductions" readonly="state not in ('draft', 'review')"/>
+                        </group>
+                        <group>
+                            <field name="gross_total" readonly="1"/>
+                            <field name="net_total" readonly="1" class="oe_subtotal_footer_separator"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Notas">
+                            <field
+                                name="notes"
+                                placeholder="Observaciones, justificación, detalle del cálculo o información adicional..."
+                                readonly="state in ('approved', 'paid')"
+                            />
+                        </page>
+                        <page string="Auditoría">
+                            <group>
+                                <group string="Revisión">
+                                    <field name="submitted_by_id" readonly="1"/>
+                                    <field name="submitted_date" readonly="1"/>
+                                </group>
+                                <group string="Aprobación">
+                                    <field name="approved_by_id" readonly="1"/>
+                                    <field name="approved_date" readonly="1"/>
+                                </group>
+                                <group string="Pago">
+                                    <field name="paid_by_id" readonly="1"/>
+                                    <field name="paid_date" readonly="1"/>
+                                </group>
+                                <group string="Cancelación">
+                                    <field name="cancelled_by_id" readonly="1"/>
+                                    <field name="cancelled_date" readonly="1"/>
+                                </group>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_cr_termination" model="ir.actions.act_window">
+        <field name="name">Liquidaciones</field>
+        <field name="res_model">cr.payroll.termination</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
 </odoo>

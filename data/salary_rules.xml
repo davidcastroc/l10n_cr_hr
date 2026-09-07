@@ -17,7 +17,7 @@
         <field name="category_id" ref="hr_payroll.BASIC" />
         <field name="condition_select">none</field>
         <field name="amount_select">code</field>
-        <field name="amount_python_compute">result = contract.wage / 2.0</field>
+        <field name="amount_python_compute">result = payslip._cr_basic_biweekly_amount()</field>
         <field name="struct_id" ref="structure_biweekly" />
     </record>
     <record id="rule_basic_weekly" model="hr.salary.rule">
@@ -278,8 +278,8 @@ result = gross + reimbursement + employee_social + tax + legal_ded + vol_ded</fi
         <field name="condition_select">none</field>
         <field name="amount_select">code</field>
         <field name="amount_python_compute">gross = categories.get('GROSS', 0.0)
-positive_gross = gross if gross &gt; 0.0 else 0.0
-result = positive_gross / 12.0</field>
+base = payslip._cr_aguinaldo_provision_base(gross)
+result = base / 12.0</field>
         <field name="appears_on_payslip">False</field>
         <field name="struct_id" ref="structure_monthly" />
     </record>
@@ -291,8 +291,8 @@ result = positive_gross / 12.0</field>
         <field name="condition_select">none</field>
         <field name="amount_select">code</field>
         <field name="amount_python_compute">gross = categories.get('GROSS', 0.0)
-positive_gross = gross if gross &gt; 0.0 else 0.0
-result = positive_gross * 0.0416666667</field>
+base = payslip._cr_vacation_provision_base(gross)
+result = base * 0.0416666667</field>
         <field name="appears_on_payslip">False</field>
         <field name="struct_id" ref="structure_monthly" />
     </record>
@@ -362,37 +362,140 @@ vol_ded = categories.get('VOL_DED', 0.0)
 result = gross + employee_social + tax + legal_ded + vol_ded</field>
         <field name="struct_id" ref="structure_extraordinary" />
     </record>
+    
+    <!-- ========================================================= -->
+    <!-- LIQUIDACIÓN LABORAL                                       -->
+    <!-- ========================================================= -->
+    <!--
+        Las reglas de liquidación consumen los hr.payslip.input
+        generados por cr.payroll.termination. De esta forma el recibo
+        usa exactamente los importes ya calculados y aprobados por la
+        liquidación, evitando recalcularlos dentro de las reglas.
+
+        Se conservan los XML IDs históricos rule_settlement_gross,
+        rule_settlement_ded y rule_settlement_net para mantener
+        compatibilidad con referencias existentes.
+    -->
+
     <record id="rule_settlement_gross" model="hr.salary.rule">
-        <field name="name">CR - Bruto liquidación</field>
-        <field name="code">GROSS</field>
+        <field name="name">CR - Salario pendiente liquidación</field>
+        <field name="code">CR_SETTLEMENT_SALARY</field>
         <field name="sequence">10</field>
-        <field name="category_id" ref="hr_payroll.GROSS" />
-        <field name="condition_select">none</field>
+        <field name="category_id" ref="hr_payroll.GROSS"/>
+        <field name="condition_select">python</field>
+        <field name="condition_python">result = payslip._cr_input_amount('CR_SETTLEMENT_SALARY') != 0.0</field>
         <field name="amount_select">code</field>
-        <field name="amount_python_compute">result = payslip._cr_input_amount('CR_SETTLEMENT_SALARY') + payslip._cr_input_amount('CR_SETTLEMENT_VACATION') + payslip._cr_input_amount('CR_NOTICE') + payslip._cr_input_amount('CR_SEVERANCE') + payslip._cr_input_amount('CR_AGUINALDO_ADJ')</field>
-        <field name="struct_id" ref="structure_settlement" />
+        <field name="amount_python_compute">result = payslip._cr_input_amount('CR_SETTLEMENT_SALARY')</field>
+        <field name="struct_id" ref="structure_settlement"/>
     </record>
+
+    <record id="rule_settlement_commissions" model="hr.salary.rule">
+        <field name="name">CR - Comisiones pendientes liquidación</field>
+        <field name="code">CR_SETTLEMENT_COMMISSIONS</field>
+        <field name="sequence">20</field>
+        <field name="category_id" ref="hr_payroll.GROSS"/>
+        <field name="condition_select">python</field>
+        <field name="condition_python">result = payslip._cr_input_amount('CR_SETTLEMENT_COMMISSIONS') != 0.0</field>
+        <field name="amount_select">code</field>
+        <field name="amount_python_compute">result = payslip._cr_input_amount('CR_SETTLEMENT_COMMISSIONS')</field>
+        <field name="struct_id" ref="structure_settlement"/>
+    </record>
+
+    <record id="rule_settlement_overtime" model="hr.salary.rule">
+        <field name="name">CR - Horas extra pendientes liquidación</field>
+        <field name="code">CR_SETTLEMENT_OVERTIME</field>
+        <field name="sequence">30</field>
+        <field name="category_id" ref="hr_payroll.GROSS"/>
+        <field name="condition_select">python</field>
+        <field name="condition_python">result = payslip._cr_input_amount('CR_SETTLEMENT_OVERTIME') != 0.0</field>
+        <field name="amount_select">code</field>
+        <field name="amount_python_compute">result = payslip._cr_input_amount('CR_SETTLEMENT_OVERTIME')</field>
+        <field name="struct_id" ref="structure_settlement"/>
+    </record>
+
+    <record id="rule_settlement_vacation" model="hr.salary.rule">
+        <field name="name">CR - Vacaciones liquidación</field>
+        <field name="code">CR_SETTLEMENT_VACATION</field>
+        <field name="sequence">40</field>
+        <field name="category_id" ref="hr_payroll.GROSS"/>
+        <field name="condition_select">python</field>
+        <field name="condition_python">result = payslip._cr_input_amount('CR_SETTLEMENT_VACATION') != 0.0</field>
+        <field name="amount_select">code</field>
+        <field name="amount_python_compute">result = payslip._cr_input_amount('CR_SETTLEMENT_VACATION')</field>
+        <field name="struct_id" ref="structure_settlement"/>
+    </record>
+
+    <record id="rule_settlement_aguinaldo" model="hr.salary.rule">
+        <field name="name">CR - Aguinaldo proporcional liquidación</field>
+        <field name="code">CR_SETTLEMENT_AGUINALDO</field>
+        <field name="sequence">50</field>
+        <field name="category_id" ref="hr_payroll.GROSS"/>
+        <field name="condition_select">python</field>
+        <field name="condition_python">result = payslip._cr_input_amount('CR_SETTLEMENT_AGUINALDO') != 0.0</field>
+        <field name="amount_select">code</field>
+        <field name="amount_python_compute">result = payslip._cr_input_amount('CR_SETTLEMENT_AGUINALDO')</field>
+        <field name="struct_id" ref="structure_settlement"/>
+    </record>
+
+    <record id="rule_settlement_notice" model="hr.salary.rule">
+        <field name="name">CR - Preaviso</field>
+        <field name="code">CR_NOTICE</field>
+        <field name="sequence">60</field>
+        <field name="category_id" ref="hr_payroll.GROSS"/>
+        <field name="condition_select">python</field>
+        <field name="condition_python">result = payslip._cr_input_amount('CR_NOTICE') != 0.0</field>
+        <field name="amount_select">code</field>
+        <field name="amount_python_compute">result = payslip._cr_input_amount('CR_NOTICE')</field>
+        <field name="struct_id" ref="structure_settlement"/>
+    </record>
+
+    <record id="rule_settlement_severance" model="hr.salary.rule">
+        <field name="name">CR - Cesantía</field>
+        <field name="code">CR_SEVERANCE</field>
+        <field name="sequence">70</field>
+        <field name="category_id" ref="hr_payroll.GROSS"/>
+        <field name="condition_select">python</field>
+        <field name="condition_python">result = payslip._cr_input_amount('CR_SEVERANCE') != 0.0</field>
+        <field name="amount_select">code</field>
+        <field name="amount_python_compute">result = payslip._cr_input_amount('CR_SEVERANCE')</field>
+        <field name="struct_id" ref="structure_settlement"/>
+    </record>
+
+    <record id="rule_settlement_other" model="hr.salary.rule">
+        <field name="name">CR - Otros ingresos liquidación</field>
+        <field name="code">CR_SETTLEMENT_OTHER</field>
+        <field name="sequence">80</field>
+        <field name="category_id" ref="hr_payroll.GROSS"/>
+        <field name="condition_select">python</field>
+        <field name="condition_python">result = payslip._cr_input_amount('CR_SETTLEMENT_OTHER') != 0.0</field>
+        <field name="amount_select">code</field>
+        <field name="amount_python_compute">result = payslip._cr_input_amount('CR_SETTLEMENT_OTHER')</field>
+        <field name="struct_id" ref="structure_settlement"/>
+    </record>
+
     <record id="rule_settlement_ded" model="hr.salary.rule">
         <field name="name">CR - Deducciones liquidación</field>
-        <field name="code">CR_RECUR_DED</field>
+        <field name="code">CR_SETTLEMENT_DEDUCTIONS</field>
         <field name="sequence">130</field>
-        <field name="category_id" ref="cat_legal_ded" />
-        <field name="condition_select">none</field>
+        <field name="category_id" ref="cat_legal_ded"/>
+        <field name="condition_select">python</field>
+        <field name="condition_python">result = payslip._cr_input_amount('CR_SETTLEMENT_DEDUCTIONS') != 0.0</field>
         <field name="amount_select">code</field>
-        <field name="amount_python_compute">gross = categories.get('GROSS', 0.0)
-result = -payslip._cr_compute_recurring_deductions(gross)</field>
-        <field name="struct_id" ref="structure_settlement" />
+        <field name="amount_python_compute">result = -abs(payslip._cr_input_amount('CR_SETTLEMENT_DEDUCTIONS'))</field>
+        <field name="struct_id" ref="structure_settlement"/>
     </record>
+
     <record id="rule_settlement_net" model="hr.salary.rule">
         <field name="name">CR - Neto liquidación</field>
         <field name="code">NET</field>
         <field name="sequence">200</field>
-        <field name="category_id" ref="hr_payroll.NET" />
+        <field name="category_id" ref="hr_payroll.NET"/>
         <field name="condition_select">none</field>
         <field name="amount_select">code</field>
         <field name="amount_python_compute">gross = categories.get('GROSS', 0.0)
 legal_ded = categories.get('LEGAL_DED', 0.0)
 result = gross + legal_ded</field>
-        <field name="struct_id" ref="structure_settlement" />
+        <field name="struct_id" ref="structure_settlement"/>
     </record>
+
 </odoo>
