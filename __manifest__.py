@@ -12,6 +12,7 @@
         "hr_payroll_account",
         "hr_contract",
         "hr_holidays",
+        "hr_work_entry_holidays",
         "hr_attendance",
         "account",
     ],
@@ -44,4 +45,5 @@
     "installable": True,
     "application": True,
     "auto_install": False,
+
 }

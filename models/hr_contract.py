@@ -229,3 +229,138 @@ class HrContract(models.Model):
                 raise ValidationError(
                     _("El divisor de salario diario debe ser mayor que cero.")
                 )
+
+    def _get_bypassing_work_entry_type_codes(self):
+        """Define prioridades CR al superponerse ausencias y feriados.
+
+        Odoo utiliza estos códigos para determinar qué tipo de Work Entry
+        debe prevalecer cuando existen varios Resource Calendar Leaves
+        sobre el mismo intervalo.
+
+        Una incapacidad CCSS validada debe conservar su tipo específico
+        cuando coincide con un feriado global.
+        """
+        codes = super()._get_bypassing_work_entry_type_codes()
+
+        cr_codes = [
+            "CR_SICK_CCSS",
+        ]
+
+        return list(
+            dict.fromkeys(
+                codes + cr_codes
+            )
+        )
+
+    def _get_work_entries_values(self, date_start, date_stop):
+        """Elimina residuos técnicos de un segundo producidos por feriados CR.
+
+        Los feriados legales de Costa Rica se almacenan como:
+
+            00:00:00 -> 23:59:59
+
+        Cuando una jornada laboral termina exactamente a medianoche,
+        la diferencia de intervalos de Odoo puede producir un Work Entry
+        residual:
+
+            23:59:59 -> 00:00:00
+
+        equivalente a un segundo de WORK100.
+
+        Solamente se elimina un intervalo cuando se cumplen todas estas
+        condiciones:
+
+        - dura exactamente un segundo;
+        - corresponde a WORK100;
+        - comienza exactamente en date_to de un feriado CR;
+        - el feriado está marcado con cr_is_public_holiday;
+        - corresponde a la misma compañía o es global.
+
+        De esta forma no se eliminan Work Entries legítimos.
+        """
+        vals_list = super()._get_work_entries_values(
+            date_start,
+            date_stop,
+        )
+
+        Holiday = self.env[
+            "resource.calendar.leaves"
+        ].sudo()
+
+        WorkEntryType = self.env[
+            "hr.work.entry.type"
+        ]
+
+        result = []
+
+        for vals in vals_list:
+            start = vals.get("date_start")
+            stop = vals.get("date_stop")
+            work_entry_type_id = vals.get(
+                "work_entry_type_id"
+            )
+            company_id = vals.get(
+                "company_id"
+            )
+
+            if not start or not stop:
+                result.append(vals)
+                continue
+
+            duration = (
+                stop - start
+            ).total_seconds()
+
+            if duration != 1:
+                result.append(vals)
+                continue
+
+            work_entry_type = WorkEntryType.browse(
+                work_entry_type_id
+            )
+
+            if (
+                not work_entry_type
+                or work_entry_type.code != "WORK100"
+            ):
+                result.append(vals)
+                continue
+
+            holiday = Holiday.search(
+                [
+                    (
+                        "cr_is_public_holiday",
+                        "=",
+                        True,
+                    ),
+                    (
+                        "resource_id",
+                        "=",
+                        False,
+                    ),
+                    (
+                        "date_to",
+                        "=",
+                        start,
+                    ),
+                    "|",
+                    (
+                        "company_id",
+                        "=",
+                        False,
+                    ),
+                    (
+                        "company_id",
+                        "=",
+                        company_id,
+                    ),
+                ],
+                limit=1,
+            )
+
+            if holiday:
+                continue
+
+            result.append(vals)
+
+        return result

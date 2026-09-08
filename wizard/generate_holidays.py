@@ -2,6 +2,8 @@
 
 from datetime import date, datetime, time, timedelta
 
+import pytz
+
 from odoo import _, fields, models
 from odoo.exceptions import ValidationError
 
@@ -85,46 +87,168 @@ class CrGenerateHolidaysWizard(models.TransientModel):
             ),
         ])
 
-        return sorted(holidays, key=lambda item: item[0])
-
-    def _prepare_holiday_datetimes(self, holiday_date):
-        """Construye un rango del mismo día sin tocar el día siguiente.
-
-        El final se establece a las 23:59:59 para evitar que dos feriados
-        consecutivos se consideren traslapados por la validación interna
-        de Odoo.
-        """
-
-        start = datetime.combine(holiday_date, time.min)
-        end = datetime.combine(holiday_date, time.max).replace(
-            microsecond=0,
+        return sorted(
+            holidays,
+            key=lambda item: item[0],
         )
 
-        return start, end
+    def _prepare_holiday_datetimes(
+        self,
+        holiday_date,
+    ):
+        """Construye el feriado completo en hora de Costa Rica.
 
-    def _holiday_exists(self, Holiday, start, end):
-        """Comprueba si ya existe un feriado global en el rango indicado."""
+        resource.calendar.leaves utiliza campos Datetime
+        almacenados internamente en UTC.
+
+        Los feriados se representan como intervalos
+        semiabiertos [inicio, fin):
+
+            00:00:00 Costa Rica
+            hasta
+            00:00:00 Costa Rica del día siguiente
+
+        Por ejemplo:
+
+            2026-05-01 00:00:00 CR
+            ->
+            2026-05-02 00:00:00 CR
+
+        En UTC:
+
+            2026-05-01 06:00:00 UTC
+            ->
+            2026-05-02 06:00:00 UTC
+
+        Usar la medianoche del día siguiente evita dejar
+        un segundo residual al final del feriado. Ese segundo
+        residual puede ser interpretado por la generación
+        estándar de Work Entries como tiempo laborable.
+        """
+
+        costa_rica_tz = pytz.timezone(
+            "America/Costa_Rica"
+        )
+
+        local_start = costa_rica_tz.localize(
+            datetime.combine(
+                holiday_date,
+                time.min,
+            )
+        )
+
+        local_end = costa_rica_tz.localize(
+            datetime.combine(
+                holiday_date + timedelta(days=1),
+                time.min,
+            )
+        )
+
+        utc_start = (
+            local_start
+            .astimezone(pytz.UTC)
+            .replace(tzinfo=None)
+        )
+
+        utc_end = (
+            local_end
+            .astimezone(pytz.UTC)
+            .replace(tzinfo=None)
+        )
+
+        return utc_start, utc_end
+
+    def _holiday_exists(
+        self,
+        Holiday,
+        start,
+        end,
+    ):
+        """Comprueba si ya existe el mismo feriado legal CR.
+
+        La búsqueda se restringe a registros marcados
+        explícitamente como feriados legales de Costa Rica.
+
+        Los feriados utilizan intervalos semiabiertos
+        [inicio, fin), por lo que dos feriados consecutivos
+        pueden compartir la frontera temporal sin que exista
+        una superposición real.
+
+        Existe intersección únicamente cuando:
+
+            existing.date_from < end
+            existing.date_to > start
+        """
 
         overlap_domain = [
             ("resource_id", "=", False),
-            ("date_from", "<=", fields.Datetime.to_string(end)),
-            ("date_to", ">=", fields.Datetime.to_string(start)),
+            ("cr_is_public_holiday", "=", True),
+            (
+                "date_from",
+                "<",
+                fields.Datetime.to_string(end),
+            ),
+            (
+                "date_to",
+                ">",
+                fields.Datetime.to_string(start),
+            ),
             "|",
             ("company_id", "=", False),
             ("company_id", "=", self.env.company.id),
         ]
 
-        return bool(Holiday.search_count(overlap_domain))
+        return bool(
+            Holiday.search_count(
+                overlap_domain
+            )
+        )
 
     def action_generate(self):
         self.ensure_one()
 
-        if self.year < 1900 or self.year > 2200:
+        if (
+            self.year < 1900
+            or self.year > 2200
+        ):
             raise ValidationError(
-                _("Ingrese un año válido entre 1900 y 2200.")
+                _(
+                    "Ingrese un año válido entre "
+                    "1900 y 2200."
+                )
             )
 
-        Holiday = self.env["resource.calendar.leaves"].sudo()
+        Holiday = (
+            self.env[
+                "resource.calendar.leaves"
+            ]
+            .sudo()
+        )
+
+        public_holiday_type = (
+            self.env[
+                "hr.work.entry.type"
+            ]
+            .sudo()
+            .search(
+                [
+                    (
+                        "code",
+                        "=",
+                        "CR_PUBLIC_HOLIDAY",
+                    ),
+                ],
+                limit=1,
+            )
+        )
+
+        if not public_holiday_type:
+            raise ValidationError(
+                _(
+                    "No existe el tipo de entrada "
+                    "de trabajo CR_PUBLIC_HOLIDAY."
+                )
+            )
 
         created = 0
         skipped = 0
@@ -136,41 +260,88 @@ class CrGenerateHolidaysWizard(models.TransientModel):
             holiday_type,
         ) in self._holiday_values():
 
-            start, end = self._prepare_holiday_datetimes(
-                holiday_date
+            start, end = (
+                self._prepare_holiday_datetimes(
+                    holiday_date
+                )
             )
 
-            if self._holiday_exists(Holiday, start, end):
+            if self._holiday_exists(
+                Holiday,
+                start,
+                end,
+            ):
                 skipped += 1
                 continue
 
             Holiday.create({
-                "name": "CR - %s" % name,
-                "date_from": fields.Datetime.to_string(start),
-                "date_to": fields.Datetime.to_string(end),
-                "company_id": self.env.company.id,
-                "calendar_id": False,
-                "resource_id": False,
-                "cr_is_public_holiday": True,
-                "cr_mandatory_pay": mandatory,
-                "cr_holiday_type": holiday_type,
-                "cr_legal_source": "Código de Trabajo / MTSS",
+                "name":
+                    "CR - %s" % name,
+
+                "date_from":
+                    fields.Datetime.to_string(
+                        start
+                    ),
+
+                "date_to":
+                    fields.Datetime.to_string(
+                        end
+                    ),
+
+                "company_id":
+                    self.env.company.id,
+
+                "calendar_id":
+                    False,
+
+                "resource_id":
+                    False,
+
+                "work_entry_type_id":
+                    public_holiday_type.id,
+
+                "time_type":
+                    "leave",
+
+                "cr_is_public_holiday":
+                    True,
+
+                "cr_mandatory_pay":
+                    mandatory,
+
+                "cr_holiday_type":
+                    holiday_type,
+
+                "cr_legal_source":
+                    "Código de Trabajo / MTSS",
             })
 
             created += 1
 
         return {
-            "type": "ir.actions.client",
-            "tag": "display_notification",
+            "type":
+                "ir.actions.client",
+
+            "tag":
+                "display_notification",
+
             "params": {
-                "title": _("Feriados de Costa Rica"),
-                "message": _(
-                    "Creados: %(created)s. "
-                    "Existentes omitidos: %(skipped)s.",
-                    created=created,
-                    skipped=skipped,
-                ),
-                "type": "success",
-                "sticky": False,
+                "title":
+                    _("Feriados de Costa Rica"),
+
+                "message":
+                    _(
+                        "Creados: %(created)s. "
+                        "Existentes omitidos: "
+                        "%(skipped)s.",
+                        created=created,
+                        skipped=skipped,
+                    ),
+
+                "type":
+                    "success",
+
+                "sticky":
+                    False,
             },
         }
